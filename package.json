@@ -1,9 +1,20 @@
 {
-  "name":"warehouse-orders-pro",
-  "version":"6.0.0",
-  "private":true,
-  "description":"Professional Arabic RTL warehouse order management system",
-  "scripts":{"start":"node server.js","check":"node --check server.js"},
-  "engines":{"node":">=20"},
-  "dependencies":{"bcryptjs":"^3.0.2","better-sqlite3":"^13.0.3","express":"^5.1.0","multer":"^2.0.2","ws":"^8.18.3"}
+  "name": "warehouse-orders-pro",
+  "version": "6.0.1",
+  "private": true,
+  "description": "Professional Arabic RTL warehouse order management system",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js"
+  },
+  "engines": {
+    "node": ">=22 <25"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "better-sqlite3": "^13.0.3",
+    "express": "^5.1.0",
+    "multer": "^2.0.2",
+    "ws": "^8.18.3"
+  }
 }

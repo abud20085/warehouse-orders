@@ -16,7 +16,18 @@ const now=()=>new Date().toISOString();
 const id=()=>crypto.randomUUID();
 const clean=v=>String(v??'').trim();
 const json=v=>{try{return JSON.parse(v)}catch{return null}};
-function q(sql,p){return db.prepare(sql).get(p)} function all(sql,p){return db.prepare(sql).all(p)} function run(sql,p){return db.prepare(sql).run(p)}
+function bind(sql,p){
+  if(p===undefined||p===null)return [];
+  if(Array.isArray(p))return p;
+  if(typeof p!=='object')return p;
+  // better-sqlite3 positional `?` placeholders require positional values.
+  // Many read queries use `{id: ...}` for readability, so convert those safely.
+  if(sql.includes('?') && !/[@:$][A-Za-z_][A-Za-z0-9_]*/.test(sql)) return Object.values(p);
+  return p;
+}
+function q(sql,p){return db.prepare(sql).get(bind(sql,p))}
+function all(sql,p){return db.prepare(sql).all(bind(sql,p))}
+function run(sql,p){return db.prepare(sql).run(bind(sql,p))}
 function column(table,col){return db.prepare(`PRAGMA table_info(${table})`).all().some(x=>x.name===col)}
 function add(table,col,type,def=''){if(!column(table,col)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${col} ${type} ${def}`)}
 
