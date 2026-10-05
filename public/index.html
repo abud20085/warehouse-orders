@@ -3,395 +3,142 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0f172a">
-<title>Warehouse • نظام المستودع</title>
+<meta name="theme-color" content="#0b1220">
+<title>نظام المستودع</title>
 <style>
 :root{
-  --bg:#f3f6fa;--panel:#fff;--panel2:#f8fafc;--line:#e2e8f0;--text:#172033;--muted:#64748b;
-  --primary:#0f766e;--primary2:#115e59;--danger:#dc2626;--warn:#d97706;--ok:#15803d;--info:#2563eb;
-  --shadow:0 8px 24px rgba(15,23,42,.07);--radius:14px;
+ --bg:#f4f7fb;--surface:#fff;--surface2:#f8fafc;--line:#e2e8f0;--text:#172033;--muted:#64748b;
+ --navy:#0b1220;--primary:#0f766e;--primary2:#115e59;--cyan:#0e7490;--danger:#b91c1c;--dangerBg:#fef2f2;
+ --warn:#b45309;--warnBg:#fffbeb;--ok:#047857;--okBg:#ecfdf5;--info:#1d4ed8;--infoBg:#eff6ff;
+ --shadow:0 8px 28px rgba(15,23,42,.07);--r:15px;
 }
-*{box-sizing:border-box}
-html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif}
-body{font-size:14px}
-button,input,select,textarea{font:inherit}
-button{border:0}
-button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid rgba(37,99,235,.18);outline-offset:1px}
-.ltr{direction:ltr!important;text-align:left!important;unicode-bidi:isolate}
-#app{min-height:100vh}
-.hidden{display:none!important}
-.shell{max-width:1500px;margin:auto;padding:14px}
-.topbar{position:sticky;top:0;z-index:20;background:rgba(243,246,250,.94);backdrop-filter:blur(10px);padding-bottom:10px}
-.topbar-inner{background:#0f172a;color:#fff;border-radius:16px;padding:10px 12px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow)}
-.brand{display:flex;align-items:center;gap:9px;font-weight:800;white-space:nowrap}
-.brand-mark{width:36px;height:36px;border-radius:10px;background:#14b8a6;display:grid;place-items:center;font-size:18px}
-.top-actions{margin-right:auto;display:flex;gap:7px;align-items:center}
-.btn{min-height:40px;padding:8px 12px;border-radius:10px;background:#fff;color:var(--text);border:1px solid var(--line);cursor:pointer;font-weight:700;white-space:nowrap}
-.btn:hover{filter:brightness(.98)}
-.btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
-.btn.dark{background:#1e293b;color:#fff;border-color:#334155}
-.btn.danger{background:#fff1f2;color:#b91c1c;border-color:#fecdd3}
-.btn.warn{background:#fffbeb;color:#92400e;border-color:#fde68a}
-.btn.ghost{background:transparent;color:inherit;border-color:rgba(255,255,255,.16)}
-.btn.small{min-height:34px;padding:6px 9px;font-size:13px}
-.btn.icon{width:38px;padding:0;display:grid;place-items:center}
-.layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:12px;margin-top:12px}
-.sidebar{position:sticky;top:74px;align-self:start;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px;box-shadow:var(--shadow)}
-.nav{display:grid;gap:5px}
-.nav button{width:100%;text-align:right;padding:11px 12px;border-radius:10px;background:transparent;color:var(--text);cursor:pointer;font-weight:700}
-.nav button.active{background:#ecfdf5;color:#047857}
-.nav-sep{height:1px;background:var(--line);margin:6px 4px}
-.content{min-width:0}
-.page{display:none}.page.active{display:block}
-.page-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 12px}
-.page-head h1{font-size:21px;margin:0}.page-head p{margin:4px 0 0;color:var(--muted)}
-.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px}
-.stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:13px;box-shadow:var(--shadow)}
-.stat .label{color:var(--muted);font-size:12px}.stat .value{font-size:25px;font-weight:850;margin-top:3px;direction:ltr;text-align:left}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:13px;margin-bottom:12px}
-.panel-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
-.panel-head h2{font-size:16px;margin:0}.panel-head .hint{color:var(--muted);font-size:12px}
-.form-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
-.field{min-width:0}.field label{display:block;font-size:12px;color:var(--muted);font-weight:700;margin-bottom:5px}
-input,select,textarea{width:100%;border:1px solid #cbd5e1;background:#fff;color:var(--text);border-radius:10px;padding:9px 10px;min-height:40px}
-textarea{resize:vertical;min-height:76px}
-.form-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:9px}
-.order-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
-.order-card{border:1px solid var(--line);border-radius:13px;padding:11px;background:#fff;min-width:0}
-.order-card.urgent{border-color:#fbbf24;background:#fffbeb}
-.order-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
-.order-code{font-weight:850;font-size:16px;direction:ltr;text-align:left;unicode-bidi:isolate}
-.order-id{color:var(--muted);font-size:11px;direction:ltr;text-align:left}
-.meta{display:flex;flex-wrap:wrap;gap:5px;margin:7px 0}
-.chip{display:inline-flex;align-items:center;gap:4px;padding:4px 7px;border-radius:999px;background:#f1f5f9;color:#475569;font-size:11px;font-weight:700}
-.chip.ok{background:#ecfdf5;color:#047857}.chip.warn{background:#fffbeb;color:#92400e}.chip.bad{background:#fef2f2;color:#b91c1c}.chip.info{background:#eff6ff;color:#1d4ed8}
-.order-notes{margin:7px 0;color:#475569;white-space:pre-wrap}
-.actions{display:flex;flex-wrap:wrap;gap:5px}
-.actions .btn{min-height:34px}
-.toolbar{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
-.toolbar .grow{flex:1;min-width:180px}
-.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:11px}
-table{width:100%;border-collapse:collapse;min-width:680px}
-th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:right;vertical-align:middle}
-th{background:#f8fafc;color:#475569;font-size:12px}
-tr:last-child td{border-bottom:0}
-.modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.46);z-index:50;display:none;align-items:center;justify-content:center;padding:14px}
-.modal-backdrop.open{display:flex}
-.modal{background:#fff;border-radius:16px;width:min(700px,100%);max-height:90vh;overflow:auto;padding:15px;box-shadow:0 25px 70px rgba(15,23,42,.25)}
-.modal-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
-.modal-head h3{margin:0}
-.list-editor{display:grid;grid-template-columns:1fr auto;gap:7px;align-items:center}
-.list-items{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
-.list-item{display:flex;align-items:center;gap:6px;background:#f8fafc;border:1px solid var(--line);padding:5px 6px 5px 5px;border-radius:9px}
-.list-item span{direction:ltr;text-align:left;unicode-bidi:isolate}
-.list-item button{width:26px;height:26px;border-radius:7px;background:#fee2e2;color:#b91c1c;cursor:pointer}
-.login-wrap{min-height:100vh;display:grid;place-items:center;padding:18px}
-.login-card{width:min(440px,100%);background:#fff;border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 18px 50px rgba(15,23,42,.10)}
-.login-title{display:flex;align-items:center;gap:10px;margin-bottom:16px}.login-title h1{margin:0;font-size:22px}
-.notice{padding:9px 10px;border-radius:10px;background:#eff6ff;color:#1e40af;margin:9px 0;font-size:13px}
-.empty{padding:26px;text-align:center;color:var(--muted)}
-.toast{position:fixed;left:14px;bottom:14px;z-index:80;background:#0f172a;color:#fff;border-radius:10px;padding:10px 13px;box-shadow:var(--shadow);display:none;max-width:min(420px,calc(100% - 28px))}
-.toast.show{display:block}
-.user-badge{font-size:12px;color:#cbd5e1;white-space:nowrap}
-.kbd{direction:ltr;background:#f1f5f9;border:1px solid var(--line);border-radius:6px;padding:2px 5px}
-@media(max-width:1050px){.layout{grid-template-columns:1fr}.sidebar{position:static}.nav{grid-template-columns:repeat(4,1fr)}.nav-sep{display:none}.cards{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:700px){.shell{padding:8px}.topbar-inner{border-radius:12px}.brand-text{display:none}.top-actions{gap:5px}.top-actions .user-badge{display:none}.layout{margin-top:8px}.nav{grid-template-columns:repeat(4,1fr)}.nav button{padding:9px 5px;text-align:center;font-size:11px}.form-grid{grid-template-columns:repeat(2,1fr)}.order-grid{grid-template-columns:1fr}.cards{gap:7px}.stat{padding:10px}.stat .value{font-size:21px}.page-head h1{font-size:18px}.btn{min-height:38px;padding:7px 10px}.panel{padding:10px}.toolbar .grow{min-width:130px}}
-@media(max-width:430px){.form-grid{grid-template-columns:1fr 1fr}.topbar-inner{padding:8px}.brand-mark{width:32px;height:32px}.btn.small{padding:5px 7px}.cards{grid-template-columns:repeat(2,1fr)}}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif}body{font-size:14px}
+button,input,select,textarea{font:inherit}button{border:0}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid rgba(14,116,144,.2);outline-offset:1px}
+.ltr{direction:ltr!important;text-align:left!important;unicode-bidi:isolate}.hidden{display:none!important}.muted{color:var(--muted)}
+.shell{max-width:1540px;margin:auto;padding:12px}.topbar{position:sticky;top:0;z-index:30;background:rgba(244,247,251,.94);backdrop-filter:blur(12px);padding-bottom:9px}.topbar-inner{background:var(--navy);color:#fff;border-radius:16px;padding:9px 11px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow)}
+.brand{display:flex;align-items:center;gap:9px;font-weight:850;white-space:nowrap}.brand-mark{width:37px;height:37px;border-radius:11px;background:#14b8a6;display:grid;place-items:center;font-size:18px}.user-badge{font-size:12px;color:#cbd5e1;white-space:nowrap}.top-actions{margin-right:auto;display:flex;gap:6px}
+.btn{min-height:40px;padding:8px 12px;border-radius:10px;background:#fff;color:var(--text);border:1px solid var(--line);cursor:pointer;font-weight:750;white-space:nowrap}.btn:hover{filter:brightness(.985)}.btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}.btn.dark{background:#1e293b;color:#fff;border-color:#334155}.btn.danger{background:var(--dangerBg);color:var(--danger);border-color:#fecaca}.btn.warn{background:var(--warnBg);color:var(--warn);border-color:#fde68a}.btn.ghost{background:transparent;color:inherit;border-color:rgba(255,255,255,.15)}.btn.small{min-height:34px;padding:6px 9px;font-size:13px}.btn.icon{width:38px;padding:0;display:grid;place-items:center}
+.layout{display:grid;grid-template-columns:225px minmax(0,1fr);gap:12px;margin-top:10px}.sidebar{position:sticky;top:70px;align-self:start;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:8px;box-shadow:var(--shadow)}.nav{display:grid;gap:4px}.nav button{width:100%;text-align:right;padding:10px 11px;border-radius:10px;background:transparent;color:var(--text);cursor:pointer;font-weight:750}.nav button.active{background:#ecfdf5;color:#047857}.nav-sep{height:1px;background:var(--line);margin:5px 4px}.content{min-width:0}.page{display:none}.page.active{display:block}.page-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 11px}.page-head h1{font-size:21px;margin:0}.page-head p{margin:4px 0 0;color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-bottom:11px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:var(--shadow)}.stat .label{color:var(--muted);font-size:12px}.stat .value{font-size:24px;font-weight:900;margin-top:2px;direction:ltr;text-align:left}.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:12px;margin-bottom:11px}.panel-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:9px}.panel-head h2{font-size:15px;margin:0}.panel-head .hint{color:var(--muted);font-size:12px}
+input,select,textarea{width:100%;border:1px solid #cbd5e1;background:#fff;color:var(--text);border-radius:10px;padding:9px 10px;min-height:40px}textarea{resize:vertical;min-height:74px}.field label{display:block;font-size:12px;color:var(--muted);font-weight:750;margin-bottom:5px}.form-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.form-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:9px}
+/* Quick order composer */
+.quick-order{display:grid;gap:9px}.quick-input{height:54px;font-size:23px;font-weight:900;border:2px solid #cbd5e1;letter-spacing:.03em;padding:9px 13px}.quick-input:focus{border-color:var(--primary)}.quick-tools{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.quick-layout{display:grid;grid-template-columns:minmax(150px,.9fr) minmax(140px,.8fr) minmax(160px,1fr) minmax(160px,1fr);gap:9px;direction:ltr}.quick-panel{direction:rtl;background:var(--surface2);border:1px solid var(--line);border-radius:13px;padding:9px;min-width:0}.quick-panel h3{font-size:12px;margin:0 0 7px;color:var(--muted)}.choice-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.choice-grid.tight{grid-template-columns:repeat(4,minmax(0,1fr))}.choice-grid.vertical{grid-template-columns:repeat(2,minmax(0,1fr));max-height:240px;overflow:auto;padding-right:1px}.choice-btn{min-height:39px;border:1px solid #d7dee8;background:#fff;border-radius:9px;cursor:pointer;font-weight:850;direction:ltr;text-align:center;color:#1e293b}.choice-btn:hover{border-color:#94a3b8;background:#f8fafc}.choice-btn.selected{background:#e6fffa;border-color:#0f766e;color:#065f5b;box-shadow:inset 0 0 0 1px #0f766e}.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;direction:ltr}.key{min-height:44px;border:1px solid #cbd5e1;background:#fff;border-radius:9px;font-weight:900;font-size:16px;cursor:pointer}.key.action{background:#eef2f7}.key.delete{background:#fff1f2;color:#b91c1c;border-color:#fecaca}.key.send{grid-column:1/-1;background:var(--primary);color:#fff;border-color:var(--primary);font-size:14px}.key.clear{grid-column:1/-1;background:#fff;color:#475569}.quick-note{margin-top:8px}.quick-note input{min-height:38px}
+.order-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.order-card{border:1px solid var(--line);border-radius:13px;padding:10px;background:#fff;min-width:0}.order-card.urgent{border-color:#fbbf24;background:#fffbeb}.order-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.order-code{font-weight:900;font-size:16px;direction:ltr;text-align:left}.order-id{color:var(--muted);font-size:11px;direction:ltr;text-align:left}.meta{display:flex;flex-wrap:wrap;gap:5px;margin:7px 0}.chip{display:inline-flex;align-items:center;gap:4px;padding:4px 7px;border-radius:999px;background:#f1f5f9;color:#475569;font-size:11px;font-weight:750}.chip.ok{background:var(--okBg);color:var(--ok)}.chip.warn{background:var(--warnBg);color:var(--warn)}.chip.bad{background:var(--dangerBg);color:var(--danger)}.chip.info{background:var(--infoBg);color:var(--info)}.order-notes{margin:7px 0;color:#475569;white-space:pre-wrap}.actions{display:flex;flex-wrap:wrap;gap:5px}.actions .btn{min-height:33px}.toolbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.toolbar .grow{flex:1;min-width:180px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:11px}table{width:100%;border-collapse:collapse;min-width:680px}th,td{padding:8px 9px;border-bottom:1px solid var(--line);text-align:right;vertical-align:middle}th{background:#f8fafc;color:#475569;font-size:12px}tr:last-child td{border-bottom:0}
+.list-edit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.list-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px}.list-editor{display:grid;grid-template-columns:1fr auto;gap:6px}.list-items{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}.list-item{display:flex;align-items:center;gap:6px;background:#f8fafc;border:1px solid var(--line);padding:4px 5px 4px 4px;border-radius:9px}.list-item span{direction:ltr;text-align:left;unicode-bidi:isolate}.list-item button{width:25px;height:25px;border-radius:7px;background:#fee2e2;color:#b91c1c;cursor:pointer}
+.modal-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.46);z-index:50;display:none;align-items:center;justify-content:center;padding:14px}.modal-backdrop.open{display:flex}.modal{background:#fff;border-radius:16px;width:min(760px,100%);max-height:90vh;overflow:auto;padding:14px;box-shadow:0 25px 70px rgba(15,23,42,.25)}.modal-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:11px}.modal-head h3{margin:0}.notice{padding:9px 10px;border-radius:10px;background:var(--infoBg);color:#1e40af;margin:8px 0;font-size:13px}.empty{padding:25px;text-align:center;color:var(--muted)}
+.login-wrap{min-height:100vh;display:grid;place-items:center;padding:18px;background:radial-gradient(circle at top,#e8f7f4,#f4f7fb 45%)}.login-card{width:min(450px,100%);background:#fff;border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 18px 55px rgba(15,23,42,.1)}.login-title{display:flex;align-items:center;gap:10px;margin-bottom:16px}.login-title h1{margin:0;font-size:22px}
+.toast{position:fixed;left:14px;bottom:14px;z-index:80;background:#0f172a;color:#fff;border-radius:10px;padding:10px 13px;box-shadow:var(--shadow);display:none;max-width:min(430px,calc(100% - 28px))}.toast.show{display:block}
+@media(max-width:1100px){.layout{grid-template-columns:1fr}.sidebar{position:static}.nav{grid-template-columns:repeat(7,1fr)}.nav-sep{display:none}.quick-layout{grid-template-columns:1fr 1fr}.cards{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.shell{padding:8px}.brand-text{display:none}.user-badge{display:none}.topbar-inner{border-radius:12px}.nav{grid-template-columns:repeat(4,1fr)}.nav button{padding:8px 4px;text-align:center;font-size:11px}.form-grid{grid-template-columns:1fr 1fr}.order-grid{grid-template-columns:1fr}.quick-layout{grid-template-columns:1fr 1fr}.list-edit-grid{grid-template-columns:1fr}.page-head h1{font-size:18px}.panel{padding:10px}.quick-input{height:50px;font-size:20px}.choice-grid{grid-template-columns:repeat(3,1fr)}.choice-grid.vertical{grid-template-columns:repeat(2,1fr);max-height:210px}}
+@media(max-width:450px){.quick-layout{grid-template-columns:1fr}.quick-panel{padding:8px}.cards{gap:6px}.stat{padding:9px}.stat .value{font-size:21px}}
 </style>
 </head>
 <body>
 <div id="loginView" class="login-wrap">
   <div class="login-card">
-    <div class="login-title"><div class="brand-mark">📦</div><div><h1>نظام المستودع</h1><div class="muted">تسجيل دخول سريع</div></div></div>
+    <div class="login-title"><div class="brand-mark">📦</div><div><h1>نظام المستودع</h1><div class="muted">دخول سريع وآمن</div></div></div>
     <div class="field"><label>الواجهة</label><select id="loginRole"><option value="downstairs">الصالة</option><option value="upstairs">المستودع</option><option value="supervisor">المشرف</option></select></div>
     <div class="field" style="margin-top:9px"><label>الاسم</label><input id="loginName" autocomplete="username" placeholder="اسم الموظف"></div>
-    <div class="field" id="loginPassWrap" style="margin-top:9px"><label>كلمة المرور</label><input id="loginPass" type="password" autocomplete="current-password"></div>
+    <div class="field hidden" id="loginPassWrap" style="margin-top:9px"><label>رمز المشرف <span class="muted">(اختياري إذا تم تفعيله)</span></label><input id="loginPass" type="password" autocomplete="current-password" inputmode="numeric"></div>
     <button class="btn primary" style="width:100%;margin-top:11px" id="loginBtn">دخول</button>
     <div id="loginMsg" class="notice hidden"></div>
   </div>
 </div>
 
 <div id="app" class="hidden">
-  <header class="topbar shell">
-    <div class="topbar-inner">
-      <div class="brand"><div class="brand-mark">📦</div><span class="brand-text">نظام المستودع</span></div>
-      <div class="user-badge" id="userBadge"></div>
-      <div class="top-actions">
-        <button class="btn ghost small" id="refreshBtn">↻ تحديث</button>
-        <button class="btn ghost small" id="logoutBtn">خروج</button>
-      </div>
-    </div>
-  </header>
-
-  <div class="shell layout">
-    <aside class="sidebar">
-      <nav class="nav" id="nav">
-        <button data-page="home" class="active">🏠 الرئيسية</button>
-        <button data-page="orders">📦 الطلبات</button>
-        <button data-page="displays">🔢 لوحة الأرقام</button>
-        <button data-page="history">🕘 السجل</button>
-        <div class="nav-sep"></div>
-        <button data-page="lists">🎨 القوائم</button>
-        <button data-page="users" class="supervisor-only">👥 الموظفون</button>
-        <button data-page="settings" class="supervisor-only">⚙️ الإعدادات</button>
-      </nav>
-    </aside>
-
-    <main class="content">
-      <section class="page active" id="page-home">
-        <div class="page-head"><div><h1>الرئيسية</h1><p>كل العمليات المهمة أمامك بدون تنقل زائد.</p></div></div>
-        <div class="cards" id="stats"></div>
-        <div class="panel">
-          <div class="panel-head"><h2>إضافة طلب</h2><span class="hint">أدخل المعلومات الأساسية ثم اضغط إرسال</span></div>
-          <div class="form-grid">
-            <div class="field"><label>الرقم</label><input id="f-number" class="ltr" inputmode="numeric" placeholder="123"></div>
-            <div class="field"><label>الحرف</label><input id="f-letter" class="ltr" placeholder="A"></div>
-            <div class="field"><label>المقاس</label><input id="f-size" class="ltr" placeholder="42"></div>
-            <div class="field"><label>اللون</label><input id="f-color" class="ltr" placeholder="BLK"></div>
-          </div>
-          <div class="field" style="margin-top:9px"><label>ملاحظات</label><input id="f-notes" placeholder="ملاحظة اختيارية"></div>
-          <div class="form-actions"><button class="btn primary" id="sendOrder">+ إرسال الطلب</button><button class="btn" id="clearOrder">مسح</button></div>
-        </div>
-        <div class="panel"><div class="panel-head"><h2>الطلبات الحالية</h2><button class="btn small" data-go="orders">عرض الكل</button></div><div id="homeOrders" class="order-grid"></div></div>
-      </section>
-
-      <section class="page" id="page-orders">
-        <div class="page-head"><div><h1>الطلبات</h1><p>تنفيذ سريع للحالات الأكثر استخدامًا.</p></div><button class="btn primary" data-go="home">+ طلب جديد</button></div>
-        <div class="panel">
-          <div class="toolbar"><input id="orderSearch" class="grow" placeholder="بحث بالرقم أو الكود أو الموظف..."><select id="orderStatus" style="width:150px"><option value="">كل الحالات</option><option value="new">جديد</option><option value="claimed">مستلم</option><option value="searching">بحث</option><option value="needs_reply">يحتاج رد</option><option value="prepared">تم التجهيز</option><option value="waiting">انتظار</option><option value="unconfirmed">غير مؤكد</option><option value="editing">تعديل</option></select></div>
-        </div>
-        <div id="ordersList" class="order-grid"></div>
-      </section>
-
-      <section class="page" id="page-displays">
-        <div class="page-head"><div><h1>لوحة الأرقام</h1><p>إضافة وعرض الطلبات المطلوبة بدون شاشة مزدحمة.</p></div><button class="btn primary" id="newDisplayBtn">+ إضافة للوحة</button></div>
-        <div class="panel"><div id="displaysList" class="order-grid"></div></div>
-      </section>
-
-      <section class="page" id="page-history">
-        <div class="page-head"><div><h1>السجل</h1><p>بحث سريع في الطلبات السابقة.</p></div></div>
-        <div class="panel"><div class="toolbar"><input id="historySearch" class="grow" placeholder="ابحث..."><button class="btn" id="historyBtn">بحث</button><button class="btn danger supervisor-only" id="clearHistoryBtn">حذف السجل المغلق</button></div></div>
-        <div class="panel"><div class="table-wrap"><table><thead><tr><th>الطلب</th><th>الحالة</th><th>المرسل</th><th>المستلم</th><th>التاريخ</th><th></th></tr></thead><tbody id="historyBody"></tbody></table></div></div>
-      </section>
-
-      <section class="page" id="page-lists">
-        <div class="page-head"><div><h1>القوائم</h1><p>أضف واحذف الخيارات المستخدمة في الطلبات من مكان واحد.</p></div></div>
-        <div id="listEditors" class="cards" style="grid-template-columns:repeat(2,minmax(0,1fr))"></div>
-      </section>
-
-      <section class="page" id="page-users">
-        <div class="page-head"><div><h1>الموظفون</h1><p>إدارة الحسابات والصلاحيات.</p></div><button class="btn primary" id="newUserBtn">+ موظف</button></div>
-        <div class="panel"><div class="table-wrap"><table><thead><tr><th>الاسم</th><th>الدور</th><th>الحالة</th><th>التخصيص</th><th></th></tr></thead><tbody id="usersBody"></tbody></table></div></div>
-      </section>
-
-      <section class="page" id="page-settings">
-        <div class="page-head"><div><h1>الإعدادات</h1><p>ضبط سرعة النظام والتنبيهات.</p></div></div>
-        <div class="panel"><div class="form-grid">
-          <div class="field"><label>حد التجهيز النشط</label><input id="set-prep" class="ltr" type="number" min="1"></div>
-          <div class="field"><label>ثواني عدم التأكيد</label><input id="set-unconfirmed" class="ltr" type="number" min="1"></div>
-          <div class="field"><label>مدة حفظ الصوت بالأيام</label><input id="set-audio" class="ltr" type="number" min="1"></div>
-          <div class="field"><label>مدة تنبيه لوحة الأرقام</label><input id="set-display" class="ltr" type="number" min="1"></div>
-        </div>
-        <div class="form-actions"><button class="btn primary" id="saveSettings">حفظ الإعدادات</button><button class="btn" id="cleanupAudio">تنظيف التسجيلات القديمة</button></div></div>
-        <div class="panel"><div class="panel-head"><h2>كلمة مرور المشرف</h2></div><div class="toolbar"><input id="newPassword" type="password" placeholder="كلمة مرور جديدة" class="grow"><button class="btn primary" id="savePassword">تغيير</button></div></div>
-      </section>
-    </main>
+<header class="topbar shell"><div class="topbar-inner"><div class="brand"><div class="brand-mark">📦</div><span class="brand-text">نظام المستودع</span></div><div class="user-badge" id="userBadge"></div><div class="top-actions"><button class="btn ghost small" id="refreshBtn">↻ تحديث</button><button class="btn ghost small" id="logoutBtn">خروج</button></div></div></header>
+<div class="shell layout">
+<aside class="sidebar"><nav class="nav" id="nav">
+<button data-page="home" class="active">🏠 الرئيسية</button><button data-page="orders">📦 الطلبات</button><button data-page="displays">🔢 لوحة الأرقام</button><button data-page="history">🕘 السجل</button><div class="nav-sep"></div><button data-page="lists">🎨 القوائم</button><button data-page="users" class="supervisor-only">👥 الموظفون</button><button data-page="settings" class="supervisor-only">⚙️ الإعدادات</button>
+</nav></aside>
+<main class="content">
+<section class="page active" id="page-home">
+<div class="page-head"><div><h1>الرئيسية</h1><p>كل شيء أمامك: اختر الأزرار ثم أرسل الطلب مباشرة.</p></div></div>
+<div class="cards" id="stats"></div>
+<div class="panel">
+ <div class="panel-head"><h2>⚡ طلب سريع</h2><span class="hint">حقل واحد فقط — الأزرار تبني الطلب تلقائيًا</span></div>
+ <div class="quick-order">
+  <input id="quickInput" class="quick-input ltr" dir="ltr" autocomplete="off" placeholder="اختر الرقم ثم الحرف ثم المقاس واللون">
+  <div class="quick-tools"><button class="btn small" id="quickUndo">↶ تراجع</button><button class="btn small" id="quickClear">مسح الطلب</button><span class="hint muted">يمكنك أيضًا الكتابة مباشرة في الحقل.</span></div>
+  <div class="quick-layout">
+   <div class="quick-panel"><h3>لوحة الأرقام</h3><div class="keypad" id="numberPad"></div></div>
+   <div class="quick-panel"><h3>الأحرف</h3><div class="choice-grid vertical" id="letterChoices"></div></div>
+   <div class="quick-panel"><h3>المقاسات</h3><div class="choice-grid vertical" id="sizeChoices"></div></div>
+   <div class="quick-panel"><h3>الألوان</h3><div class="choice-grid vertical" id="colorChoices"></div></div>
   </div>
+  <div class="quick-note"><input id="quickNotes" placeholder="ملاحظة اختيارية للطلب"></div>
+  <div class="form-actions"><button class="btn primary" id="sendOrder">+ إرسال الطلب</button><button class="btn" id="clearOrder">مسح الكل</button><button class="btn supervisor-only" id="manageListsHome">إدارة الأزرار</button></div>
+ </div>
 </div>
+<div class="panel"><div class="panel-head"><h2>الطلبات الحالية</h2><button class="btn small" data-go="orders">عرض الكل</button></div><div id="homeOrders" class="order-grid"></div></div>
+</section>
 
-<div id="modal" class="modal-backdrop"><div class="modal"><div class="modal-head"><h3 id="modalTitle"></h3><button class="btn icon" id="modalClose">×</button></div><div id="modalBody"></div></div></div>
-<div id="toast" class="toast"></div>
-
+<section class="page" id="page-orders"><div class="page-head"><div><h1>الطلبات</h1><p>حالات واضحة وإجراءات مباشرة.</p></div><button class="btn primary" data-go="home">+ طلب جديد</button></div><div class="panel"><div class="toolbar"><input id="orderSearch" class="grow" placeholder="بحث بالرقم أو الكود أو الموظف..."><select id="orderStatus" style="width:150px"><option value="">كل الحالات</option><option value="new">جديد</option><option value="claimed">مستلم</option><option value="searching">بحث</option><option value="needs_reply">يحتاج رد</option><option value="prepared">تم التجهيز</option><option value="waiting">انتظار</option><option value="unconfirmed">غير مؤكد</option><option value="editing">تعديل</option></select></div></div><div id="ordersList" class="order-grid"></div></section>
+<section class="page" id="page-displays"><div class="page-head"><div><h1>لوحة الأرقام</h1><p>إضافة وعرض الطلبات المطلوبة بسرعة.</p></div><button class="btn primary" id="newDisplayBtn">+ إضافة للوحة</button></div><div class="panel"><div id="displaysList" class="order-grid"></div></div></section>
+<section class="page" id="page-history"><div class="page-head"><div><h1>السجل</h1><p>بحث سريع في الطلبات السابقة.</p></div></div><div class="panel"><div class="toolbar"><input id="historySearch" class="grow" placeholder="ابحث..."><button class="btn" id="historyBtn">بحث</button><button class="btn danger supervisor-only" id="clearHistoryBtn">حذف السجل المغلق</button></div></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>الطلب</th><th>الحالة</th><th>المرسل</th><th>المستلم</th><th>التاريخ</th><th></th></tr></thead><tbody id="historyBody"></tbody></table></div></div></section>
+<section class="page" id="page-lists"><div class="page-head"><div><h1>القوائم والأزرار</h1><p>هذه الأزرار هي نفسها التي تظهر في صفحة الطلب السريع.</p></div></div><div id="listEditors" class="list-edit-grid"></div></section>
+<section class="page" id="page-users"><div class="page-head"><div><h1>الموظفون والصلاحيات</h1><p>المشرف يمتلك كل الصلاحيات ويمكن تخصيص صلاحيات الموظفين.</p></div><button class="btn primary" id="newUserBtn">+ موظف</button></div><div class="panel"><div class="table-wrap"><table><thead><tr><th>الاسم</th><th>الدور</th><th>الحالة</th><th>إرسال</th><th>استقبال</th><th>تخصيص</th><th></th></tr></thead><tbody id="usersBody"></tbody></table></div></div></section>
+<section class="page" id="page-settings"><div class="page-head"><div><h1>الإعدادات</h1><p>إعدادات التشغيل، الأمان، والتنظيف.</p></div></div><div class="panel"><div class="form-grid"><div class="field"><label>حد التجهيز النشط</label><input id="set-prep" class="ltr" type="number" min="1"></div><div class="field"><label>ثواني عدم التأكيد</label><input id="set-unconfirmed" class="ltr" type="number" min="1"></div><div class="field"><label>حفظ الصوت بالأيام</label><input id="set-audio" class="ltr" type="number" min="1"></div><div class="field"><label>تنبيه لوحة الأرقام بالثواني</label><input id="set-display" class="ltr" type="number" min="1"></div></div><div class="form-actions"><button class="btn primary" id="saveSettings">حفظ الإعدادات</button><button class="btn" id="cleanupAudio">تنظيف التسجيلات القديمة</button></div></div>
+<div class="panel"><div class="panel-head"><h2>أمان المشرف</h2><span class="hint">الدخول بدون رمز افتراضيًا، ويمكن تفعيل رمز من هنا.</span></div><div class="toolbar"><input id="newPassword" type="password" inputmode="numeric" placeholder="رمز جديد اختياري" class="grow"><button class="btn primary" id="savePassword">تفعيل / تغيير الرمز</button><button class="btn danger" id="disablePassword">تعطيل الرمز</button></div><div class="notice">بعد تفعيل الرمز سيظهر حقل الرمز عند اختيار واجهة المشرف. تعطيله يعيد الدخول السريع بدون رمز.</div></div>
+</section>
+</main></div></div>
+<div id="modal" class="modal-backdrop"><div class="modal"><div class="modal-head"><h3 id="modalTitle"></h3><button class="btn icon" id="modalClose">×</button></div><div id="modalBody"></div></div></div><div id="toast" class="toast"></div>
 <script>
 "use strict";
-let token="", me=null, state={orders:[],history:[],users:[],displays:[],settings:{},ui:{}}, ws=null, toastTimer=null;
-
-const $=id=>document.getElementById(id);
-const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
-const ltr=v=>`<span class="ltr">${esc(v||"—")}</span>`;
+let token="",me=null,state={orders:[],history:[],users:[],displays:[],settings:{},ui:{}},ws=null,toastTimer=null;
+const $=id=>document.getElementById(id), esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])), ltr=v=>`<span class="ltr">${esc(v||"—")}</span>`;
 const statusNames={new:"جديد",claimed:"مستلم",searching:"بحث",needs_reply:"يحتاج رد",prepared:"تم التجهيز",waiting:"انتظار",unconfirmed:"غير مؤكد",closed:"مغلق",cancelled:"ملغى",returned:"مرتجع",editing:"تعديل"};
 const statusClass=s=>["prepared","closed"].includes(s)?"ok":["waiting","unconfirmed","editing"].includes(s)?"warn":["cancelled","returned"].includes(s)?"bad":"info";
 const roleNames={supervisor:"مشرف",downstairs:"صالة",upstairs:"مستودع"};
 const showError=e=>toast(e?.message||"حدث خطأ",true);
 function toast(msg,error=false){const t=$("toast");t.textContent=msg;t.style.background=error?"#991b1b":"#0f172a";t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),2600)}
-async function api(url,opt={}){
-  const headers={...(opt.headers||{})};
-  if(token) headers.Authorization="Bearer "+token;
-  if(opt.body && typeof opt.body==="object" && !(opt.body instanceof FormData)){headers["Content-Type"]="application/json";opt.body=JSON.stringify(opt.body)}
-  const r=await fetch(url,{...opt,headers});
-  const d=await r.json().catch(()=>({}));
-  if(!r.ok) throw Error(d.error||"حدث خطأ");
-  return d;
-}
-function openModal(title,html){$("modalTitle").textContent=title;$("modalBody").innerHTML=html;$("modal").classList.add("open")}
-function closeModal(){$("modal").classList.remove("open")}
+async function api(url,opt={}){const headers={...(opt.headers||{})};if(token)headers.Authorization="Bearer "+token;if(opt.body&&typeof opt.body==="object"&&!(opt.body instanceof FormData)){headers["Content-Type"]="application/json";opt.body=JSON.stringify(opt.body)}const r=await fetch(url,{...opt,headers});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||"حدث خطأ");return d}
+function openModal(title,html){$("modalTitle").textContent=title;$("modalBody").innerHTML=html;$("modal").classList.add("open")}function closeModal(){$("modal").classList.remove("open")}
 function go(page){document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));$("page-"+page)?.classList.add("active");document.querySelectorAll("#nav button").forEach(x=>x.classList.toggle("active",x.dataset.page===page));renderAll()}
 function code(o){return [o.number,o.letter,o.size,o.color].filter(Boolean).join("-")||"طلب"}
-function card(o){
-  const canClaim=me?.role==="upstairs" && !o.claimant_id && ["new","waiting"].includes(o.status);
-  const isClosed=["closed","cancelled"].includes(o.status);
-  return `<article class="order-card ${o.priority==="urgent"?"urgent":""}">
-    <div class="order-top"><div><div class="order-code">${ltr(code(o))}</div><div class="order-id">#${o.id}</div></div><span class="chip ${statusClass(o.status)}">${esc(statusNames[o.status]||o.status)}</span></div>
-    <div class="meta"><span class="chip">${esc(o.sender_name||"—")}</span>${o.claimant_name?`<span class="chip">${esc(o.claimant_name)}</span>`:""}${o.priority==="urgent"?'<span class="chip warn">عاجل</span>':""}</div>
-    ${o.notes?`<div class="order-notes">${esc(o.notes)}</div>`:""}
-    <div class="actions">
-      ${canClaim?`<button class="btn small primary" onclick="claimOrder(${o.id})">استلام</button>`:""}
-      ${me?.role==="upstairs"&&!isClosed?`<button class="btn small" onclick="setStatus(${o.id},'searching')">بحث</button><button class="btn small" onclick="setStatus(${o.id},'prepared')">تم التجهيز</button>`:""}
-      ${me?.role!=="upstairs"&&!isClosed?`<button class="btn small" onclick="setStatus(${o.id},'closed')">إغلاق</button>`:""}
-      ${!isClosed?`<button class="btn small" onclick="editOrder(${o.id})">تعديل</button>`:""}
-      ${isClosed?`<button class="btn small" onclick="reopenOrder(${o.id})">إعادة فتح</button>`:""}
-      ${me?.role==="supervisor"?`<button class="btn small danger" onclick="deleteOrder(${o.id})">حذف</button>`:""}
-    </div>
-  </article>`
-}
-function renderStats(){
- const active=state.orders.filter(o=>!["closed","cancelled"].includes(o.status)).length;
- const prepared=state.orders.filter(o=>o.status==="prepared").length;
- const waiting=state.orders.filter(o=>["waiting","needs_reply","unconfirmed"].includes(o.status)).length;
- const urgent=state.orders.filter(o=>o.priority==="urgent"&&!["closed","cancelled"].includes(o.status)).length;
- $("stats").innerHTML=[["طلبات مفتوحة",active],["تم التجهيز",prepared],["تحتاج متابعة",waiting],["عاجلة",urgent]].map(x=>`<div class="stat"><div class="label">${x[0]}</div><div class="value">${x[1]}</div></div>`).join("");
-}
-function renderOrders(){
- const q=($("orderSearch")?.value||"").trim().toUpperCase(), st=$("orderStatus")?.value||"";
- let rows=state.orders.filter(o=>!["closed","cancelled"].includes(o.status));
- if(q) rows=rows.filter(o=>(code(o)+" "+(o.sender_name||"")+" "+(o.claimant_name||"")).toUpperCase().includes(q));
- if(st) rows=rows.filter(o=>o.status===st);
- rows.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
- $("ordersList").innerHTML=rows.length?rows.map(card).join(""):'<div class="panel empty">لا توجد طلبات مطابقة</div>';
- $("homeOrders").innerHTML=state.orders.filter(o=>!["closed","cancelled"].includes(o.status)).slice(0,6).map(card).join("")||'<div class="empty">لا توجد طلبات مفتوحة</div>';
-}
-function renderDisplays(){
- const rows=state.displays||[];
- $("displaysList").innerHTML=rows.length?rows.map(d=>`<article class="order-card">
- <div class="order-top"><div class="order-code">${ltr([d.number,d.letter,d.size,d.color].filter(Boolean).join("-"))}</div><span class="chip ${d.status==="displayed"?"ok":d.status==="waiting"?"warn":"info"}">${esc({requested:"مطلوب",waiting:"انتظار",displayed:"ظاهر",ended:"منتهي",cancelled:"ملغى",expired:"منتهي"}[d.status]||d.status)}</span></div>
- <div class="meta"><span class="chip">${esc(d.created_by||"—")}</span>${d.exact_piece?'<span class="chip">قطعة محددة</span>':""}</div>
- <div class="actions">${d.status!=="displayed"?`<button class="btn small primary" onclick="displayStatus(${d.id},'displayed')">إظهار</button>`:""}${["requested","waiting","displayed"].includes(d.status)?`<button class="btn small" onclick="displayStatus(${d.id},'ended')">إنهاء</button>`:""}</div>
- </article>`).join(""):'<div class="empty">لا توجد طلبات على اللوحة</div>';
-}
-function renderHistory(rows=state.history){
- $("historyBody").innerHTML=rows.length?rows.map(o=>`<tr><td>${ltr(code(o))}<div class="order-id">#${o.id}</div></td><td><span class="chip ${statusClass(o.status)}">${esc(statusNames[o.status]||o.status)}</span></td><td>${esc(o.sender_name||"—")}</td><td>${esc(o.claimant_name||"—")}</td><td class="ltr">${new Date(o.created_at).toLocaleString("en-GB")}</td><td><button class="btn small" onclick="viewOrder(${o.id})">تفاصيل</button>${me?.role==="supervisor"?` <button class="btn small danger" onclick="deleteOrder(${o.id})">حذف</button>`:""}</td></tr>`).join(""):'<tr><td colspan="6" class="empty">لا توجد نتائج</td></tr>';
-}
-const listDefs=[
- {key:"numbers",title:"الأرقام",placeholder:"مثال: 123",ltr:true},
- {key:"letters",title:"الأحرف",placeholder:"مثال: A",ltr:true},
- {key:"sizes",title:"المقاسات",placeholder:"مثال: 42",ltr:true},
- {key:"colors",title:"الألوان",placeholder:"مثال: BLK",ltr:true},
- {key:"locations",title:"أماكن الاستدعاء",placeholder:"مثال: الكاشير",ltr:false}
-];
-function renderLists(){
- $("listEditors").innerHTML=listDefs.map(d=>`<div class="panel">
-   <div class="panel-head"><h2>${d.title}</h2><span class="hint">${(state.settings[d.key]||[]).length} خيار</span></div>
-   <div class="list-editor"><input id="new-${d.key}" ${d.ltr?'class="ltr"':''} placeholder="${d.placeholder}"><button class="btn primary" onclick="addListItem('${d.key}')">+ إضافة</button></div>
-   <div class="list-items">${(state.settings[d.key]||[]).map((v,i)=>`<div class="list-item"><span ${d.ltr?'dir="ltr"':''}>${esc(v)}</span><button title="حذف" onclick="removeListItem('${d.key}',${i})">×</button></div>`).join("")||'<span class="muted">لا توجد عناصر</span>'}</div>
- </div>`).join("");
-}
-function renderUsers(){
- $("usersBody").innerHTML=(state.users||[]).map(u=>`<tr><td>${esc(u.name)}</td><td>${roleNames[u.role]||u.role}</td><td><span class="chip">${esc(u.status)}</span></td><td>${u.can_customize?"نعم":"لا"}</td><td><button class="btn small" onclick="editUser(${u.id})">تعديل</button></td></tr>`).join("");
-}
-function renderSettings(){
- $("set-prep").value=state.settings.prepLimit||10;$("set-unconfirmed").value=state.settings.unconfirmedSeconds||30;$("set-audio").value=state.settings.audioRetentionDays||30;$("set-display").value=state.settings.displayAlertSeconds||30;
-}
-function renderAll(){renderStats();renderOrders();renderDisplays();renderHistory();renderLists();renderUsers();renderSettings()}
-async function load(){
- const d=await api("/api/bootstrap");state=d;me=d.me;
- $("userBadge").textContent=`${me.name} • ${roleNames[me.role]||me.role}`;
- document.querySelectorAll(".supervisor-only").forEach(x=>x.classList.toggle("hidden",me.role!=="supervisor"));
- renderAll();
-}
-async function login(){
- try{
-  $("loginBtn").disabled=true;
-  const d=await api("/api/login",{method:"POST",body:{role:$("loginRole").value,name:$("loginName").value,password:$("loginPass").value}});
-  token=d.token;me=d.user;$("loginView").classList.add("hidden");$("app").classList.remove("hidden");await load();connect();toast("تم تسجيل الدخول");
- }catch(e){$("loginMsg").textContent=e.message;$("loginMsg").classList.remove("hidden")}finally{$("loginBtn").disabled=false}
-}
+function card(o){const canClaim=me?.role==="upstairs"&&!o.claimant_id&&["new","waiting"].includes(o.status),closed=["closed","cancelled"].includes(o.status);return `<article class="order-card ${o.priority==="urgent"?"urgent":""}"><div class="order-top"><div><div class="order-code">${ltr(code(o))}</div><div class="order-id">#${o.id}</div></div><span class="chip ${statusClass(o.status)}">${esc(statusNames[o.status]||o.status)}</span></div><div class="meta"><span class="chip">${esc(o.sender_name||"—")}</span>${o.claimant_name?`<span class="chip">المستلم: ${esc(o.claimant_name)}</span>`:""}${o.priority==="urgent"?`<span class="chip warn">عاجل</span>`:""}</div>${o.notes?`<div class="order-notes">${esc(o.notes)}</div>`:""}<div class="actions">${canClaim?`<button class="btn small primary" onclick="claimOrder(${o.id})">استلام</button>`:""}${me?.role==="upstairs"&&!closed?`<button class="btn small" onclick="setStatus(${o.id},'searching')">بحث</button><button class="btn small" onclick="setStatus(${o.id},'prepared')">تم التجهيز</button>`:""}${me?.role!=="upstairs"&&!closed?`<button class="btn small" onclick="setStatus(${o.id},'closed')">إغلاق</button>`:""}${!closed?`<button class="btn small" onclick="editOrder(${o.id})">تعديل</button>`:""}${closed?`<button class="btn small" onclick="reopenOrder(${o.id})">إعادة فتح</button>`:""}<button class="btn small" onclick="viewOrder(${o.id})">تفاصيل</button>${me?.role==="supervisor"?`<button class="btn small danger" onclick="deleteOrder(${o.id})">حذف</button>`:""}</div></article>`}
+function renderStats(){const active=state.orders.filter(o=>!["closed","cancelled"].includes(o.status)).length,prepared=state.orders.filter(o=>o.status==="prepared").length,waiting=state.orders.filter(o=>["waiting","needs_reply","unconfirmed"].includes(o.status)).length,urgent=state.orders.filter(o=>o.priority==="urgent"&&!['closed','cancelled'].includes(o.status)).length;$("stats").innerHTML=[["طلبات مفتوحة",active],["تم التجهيز",prepared],["تحتاج متابعة",waiting],["عاجلة",urgent]].map(x=>`<div class="stat"><div class="label">${x[0]}</div><div class="value">${x[1]}</div></div>`).join("")}
+function renderOrders(){const q=($('orderSearch')?.value||"").trim().toUpperCase(),st=$("orderStatus")?.value||"";let rows=state.orders.filter(o=>!["closed","cancelled"].includes(o.status));if(q)rows=rows.filter(o=>(code(o)+" "+(o.sender_name||"")+" "+(o.claimant_name||"")).toUpperCase().includes(q));if(st)rows=rows.filter(o=>o.status===st);rows.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));$("ordersList").innerHTML=rows.length?rows.map(card).join(""):'<div class="panel empty">لا توجد طلبات مطابقة</div>';$('homeOrders').innerHTML=state.orders.filter(o=>!["closed","cancelled"].includes(o.status)).slice(0,6).map(card).join("")||'<div class="empty">لا توجد طلبات مفتوحة</div>'}
+function renderDisplays(){const rows=state.displays||[];$("displaysList").innerHTML=rows.length?rows.map(d=>`<article class="order-card"><div class="order-top"><div class="order-code">${ltr([d.number,d.letter,d.size,d.color].filter(Boolean).join("-"))}</div><span class="chip ${d.status==="displayed"?"ok":d.status==="waiting"?"warn":"info"}">${esc({requested:"مطلوب",waiting:"انتظار",displayed:"ظاهر",ended:"منتهي",cancelled:"ملغى",expired:"منتهي"}[d.status]||d.status)}</span></div><div class="meta"><span class="chip">${esc(d.created_by||"—")}</span>${d.exact_piece?'<span class="chip">قطعة محددة</span>':""}</div><div class="actions">${d.status!=="displayed"?`<button class="btn small primary" onclick="displayStatus(${d.id},'displayed')">إظهار</button>`:""}${["requested","waiting","displayed"].includes(d.status)?`<button class="btn small" onclick="displayStatus(${d.id},'ended')">إنهاء</button>`:""}</div></article>`).join(""):'<div class="empty">لا توجد طلبات على اللوحة</div>'}
+function renderHistory(rows=state.history){$("historyBody").innerHTML=rows.length?rows.map(o=>`<tr><td>${ltr(code(o))}<div class="order-id">#${o.id}</div></td><td><span class="chip ${statusClass(o.status)}">${esc(statusNames[o.status]||o.status)}</span></td><td>${esc(o.sender_name||"—")}</td><td>${esc(o.claimant_name||"—")}</td><td class="ltr">${new Date(o.created_at).toLocaleString("en-GB")}</td><td><button class="btn small" onclick="viewOrder(${o.id})">تفاصيل</button>${me?.role==="supervisor"?` <button class="btn small danger" onclick="deleteOrder(${o.id})">حذف</button>`:""}</td></tr>`).join(""):'<tr><td colspan="6" class="empty">لا توجد نتائج</td></tr>'}
+const listDefs=[{key:"numbers",title:"الأرقام",placeholder:"مثال: 123",ltr:true},{key:"letters",title:"الأحرف",placeholder:"مثال: A",ltr:true},{key:"sizes",title:"المقاسات",placeholder:"مثال: 42",ltr:true},{key:"colors",title:"الألوان",placeholder:"مثال: BLK",ltr:true},{key:"locations",title:"أماكن الاستدعاء",placeholder:"مثال: الكاشير",ltr:false}];
+function renderLists(){$("listEditors").innerHTML=listDefs.map(d=>`<div class="list-card"><div class="panel-head"><h2>${d.title}</h2><span class="hint">${(state.settings[d.key]||[]).length} خيار</span></div><div class="list-editor"><input id="new-${d.key}" ${d.ltr?'class="ltr"':''} placeholder="${d.placeholder}"><button class="btn primary" onclick="addListItem('${d.key}')">+ إضافة</button></div><div class="list-items">${(state.settings[d.key]||[]).map((v,i)=>`<div class="list-item"><span ${d.ltr?'dir="ltr"':''}>${esc(v)}</span><button title="حذف" onclick="removeListItem('${d.key}',${i})">×</button></div>`).join("")||'<span class="muted">لا توجد عناصر</span>'}</div></div>`).join("")}
+function renderUsers(){$("usersBody").innerHTML=(state.users||[]).map(u=>`<tr><td>${esc(u.name)}</td><td>${roleNames[u.role]||u.role}</td><td><span class="chip">${esc(u.status)}</span></td><td>${u.can_send?"نعم":"لا"}</td><td>${u.can_receive?"نعم":"لا"}</td><td>${u.can_customize?"نعم":"لا"}</td><td><button class="btn small" onclick="editUser(${u.id})">صلاحيات</button></td></tr>`).join("")}
+function renderSettings(){$("set-prep").value=state.settings.prepLimit||10;$("set-unconfirmed").value=state.settings.unconfirmedSeconds||30;$("set-audio").value=state.settings.audioRetentionDays||30;$("set-display").value=state.settings.displayAlertSeconds||30}
+function renderQuickChoices(){const s=state.settings||{};renderChoices("letterChoices",s.letters||[],"letter");renderChoices("sizeChoices",s.sizes||[],"size");renderChoices("colorChoices",s.colors||[],"color");const pad=["1","2","3","4","5","6","7","8","9","/","0","-","⌫","مسح"];$("numberPad").innerHTML=pad.map(k=>`<button class="key ${k==='⌫'?"delete":""} ${k==='مسح'?"clear":""}" onclick="quickKey('${k}')">${k}</button>`).join("")+`<button class="key send" onclick="createOrder()">+ إرسال الطلب</button>`}
+function renderChoices(id,arr,type){$(id).innerHTML=arr.length?arr.map(v=>`<button class="choice-btn" onclick="choosePart('${type}',${JSON.stringify(String(v)).replace(/'/g,"&#39;")})">${esc(v)}</button>`).join(""):'<span class="muted">لا توجد أزرار</span>'}
+const quick={number:"",letter:"",size:"",color:""};
+function refreshQuickInput(){const parts=[quick.number,quick.letter,quick.size,quick.color].filter(Boolean);$("quickInput").value=parts.join("-")}
+function choosePart(type,val){quick[type]=String(val);refreshQuickInput();document.querySelectorAll(`#${type==='letter'?'letterChoices':type==='size'?'sizeChoices':'colorChoices'} .choice-btn`).forEach(b=>b.classList.toggle("selected",b.textContent.trim()===String(val)))}
+function quickKey(k){if(k==='⌫'){if(quick.number)quick.number=quick.number.slice(0,-1);else if(quick.color)quick.color="";else if(quick.size)quick.size="";else if(quick.letter)quick.letter="";refreshQuickInput();return}if(k==='مسح'){clearOrder();return}quick.number+=k;refreshQuickInput()}
+function parseQuick(){const raw=$("quickInput").value.trim();const known={numbers:(state.settings.numbers||[]).map(String),letters:(state.settings.letters||[]).map(String),sizes:(state.settings.sizes||[]).map(String),colors:(state.settings.colors||[]).map(String)};if(raw===quick.number+(quick.letter?'-'+quick.letter:'')+(quick.size?'-'+quick.size:'')+(quick.color?'-'+quick.color:'')||Object.values(quick).some(Boolean))return {...quick};const parts=raw.split(/\s*-\s*/).filter(Boolean);const out={number:parts[0]||"",letter:"",size:"",color:""};for(const p of parts.slice(1)){if(known.letters.includes(p.toUpperCase()))out.letter=p;else if(known.sizes.includes(p))out.size=p;else if(known.colors.includes(p.toUpperCase()))out.color=p.toUpperCase()}return out}
+function clearOrder(){quick.number=quick.letter=quick.size=quick.color="";$("quickInput").value="";$("quickNotes").value="";document.querySelectorAll(".choice-btn.selected").forEach(x=>x.classList.remove("selected"))}
+async function load(){const d=await api("/api/bootstrap");state=d;me=d.me;$("userBadge").textContent=`${me.name} • ${roleNames[me.role]||me.role}`;document.querySelectorAll(".supervisor-only").forEach(x=>x.classList.toggle("hidden",me.role!=="supervisor"));renderAll()}
+function renderAll(){renderStats();renderOrders();renderDisplays();renderHistory();renderLists();renderUsers();renderSettings();renderQuickChoices()}
+async function login(){try{$("loginBtn").disabled=true;const d=await api("/api/login",{method:"POST",body:{role:$("loginRole").value,name:$("loginName").value,password:$("loginPass").value}});token=d.token;me=d.user;$("loginView").classList.add("hidden");$("app").classList.remove("hidden");await load();connect();toast("تم تسجيل الدخول")}catch(e){$("loginMsg").textContent=e.message;$("loginMsg").classList.remove("hidden")}finally{$("loginBtn").disabled=false}}
 async function logout(){try{await api("/api/logout",{method:"POST"})}catch{}if(ws)ws.close();location.reload()}
-async function createOrder(){
- try{
-  const body={number:$("f-number").value,letter:$("f-letter").value,size:$("f-size").value,color:$("f-color").value,notes:$("f-notes").value};
-  await api("/api/orders",{method:"POST",body});clearOrder();await load();go("orders");toast("تم إرسال الطلب");
- }catch(e){showError(e)}
-}
-function clearOrder(){["f-number","f-letter","f-size","f-color","f-notes"].forEach(id=>$(id).value="")}
+async function createOrder(){try{const p=parseQuick();if(!p.number&&!p.letter&&!p.size&&!p.color)return toast("اختر بيانات الطلب أولًا",true);await api("/api/orders",{method:"POST",body:{number:p.number,letter:p.letter,size:p.size,color:p.color,notes:$("quickNotes").value}});clearOrder();await load();toast("تم إرسال الطلب بسرعة")}catch(e){showError(e)}}
 async function claimOrder(id){try{await api(`/api/orders/${id}/claim`,{method:"POST",body:{}});await load();toast("تم استلام الطلب")}catch(e){showError(e)}}
-async function setStatus(id,status){
- try{await api(`/api/orders/${id}/status`,{method:"POST",body:{status}});await load();toast("تم تحديث الحالة")}catch(e){showError(e)}
-}
+async function setStatus(id,status){try{await api(`/api/orders/${id}/status`,{method:"POST",body:{status}});await load();toast("تم تحديث الحالة")}catch(e){showError(e)}}
 async function reopenOrder(id){try{await api(`/api/orders/${id}/reopen`,{method:"POST",body:{reason:"إعادة فتح"}});await load();toast("تمت إعادة فتح الطلب")}catch(e){showError(e)}}
-async function deleteOrder(id){
- if(me.role!=="supervisor")return;
- if(!confirm("حذف الطلب نهائيًا؟ سيتم حذف تفاصيله والتسجيلات المرتبطة به."))return;
- try{await api(`/api/orders/${id}`,{method:"DELETE"});await load();toast("تم حذف الطلب")}catch(e){showError(e)}
-}
-async function editOrder(id){
- const o=state.orders.find(x=>x.id===id)||state.history.find(x=>x.id===id);if(!o)return;
- openModal("تعديل الطلب",`<div class="form-grid">
- <div class="field"><label>الرقم</label><input id="m-number" class="ltr" value="${esc(o.number)}"></div>
- <div class="field"><label>الحرف</label><input id="m-letter" class="ltr" value="${esc(o.letter)}"></div>
- <div class="field"><label>المقاس</label><input id="m-size" class="ltr" value="${esc(o.size)}"></div>
- <div class="field"><label>اللون</label><input id="m-color" class="ltr" value="${esc(o.color)}"></div></div>
- <div class="field" style="margin-top:9px"><label>ملاحظات</label><textarea id="m-notes">${esc(o.notes||"")}</textarea></div>
- <div class="form-actions"><button class="btn primary" id="saveEdit">حفظ التعديل</button><button class="btn" onclick="closeModal()">إلغاء</button></div>`);
- try{await api(`/api/orders/${id}/edit/start`,{method:"POST",body:{}})}catch(e){closeModal();showError(e);return}
- $("saveEdit").onclick=async()=>{try{await api(`/api/orders/${id}/edit`,{method:"POST",body:{number:$("m-number").value,letter:$("m-letter").value,size:$("m-size").value,color:$("m-color").value,notes:$("m-notes").value}});closeModal();await load();toast("تم حفظ التعديل")}catch(e){showError(e)}}
-}
-async function viewOrder(id){
- try{const d=await api(`/api/order/${id}/details`);openModal(`تفاصيل الطلب #${id}`,`<div class="panel" style="box-shadow:none;margin:0"><div class="order-code">${ltr(code(d.order))}</div><div class="meta"><span class="chip">${esc(statusNames[d.order.status]||d.order.status)}</span><span class="chip">${esc(d.order.sender_name||"—")}</span></div><p>${esc(d.order.notes||"لا توجد ملاحظات")}</p><h4>الأحداث</h4>${(d.events||[]).map(e=>`<div style="padding:7px 0;border-bottom:1px solid var(--line)"><b>${esc(e.type)}</b> — ${esc(e.actor_name||"النظام")} <span class="muted ltr">${new Date(e.created_at).toLocaleString("en-GB")}</span></div>`).join("")||"لا توجد أحداث"}</div>`)}catch(e){showError(e)}
-}
+async function deleteOrder(id){if(me.role!=="supervisor")return;if(!confirm("حذف الطلب نهائيًا؟ سيتم حذف تفاصيله والتسجيلات المرتبطة به."))return;try{await api(`/api/orders/${id}`,{method:"DELETE"});await load();toast("تم حذف الطلب")}catch(e){showError(e)}}
+async function editOrder(id){const o=state.orders.find(x=>x.id===id)||state.history.find(x=>x.id===id);if(!o)return;openModal("تعديل الطلب",`<div class="form-grid"><div class="field"><label>الرقم</label><input id="m-number" class="ltr" value="${esc(o.number)}"></div><div class="field"><label>الحرف</label><input id="m-letter" class="ltr" value="${esc(o.letter)}"></div><div class="field"><label>المقاس</label><input id="m-size" class="ltr" value="${esc(o.size)}"></div><div class="field"><label>اللون</label><input id="m-color" class="ltr" value="${esc(o.color)}"></div></div><div class="field" style="margin-top:9px"><label>ملاحظات</label><textarea id="m-notes">${esc(o.notes||"")}</textarea></div><div class="form-actions"><button class="btn primary" id="saveEdit">حفظ التعديل</button><button class="btn" onclick="closeModal()">إلغاء</button></div>`);try{await api(`/api/orders/${id}/edit/start`,{method:"POST",body:{}})}catch(e){closeModal();showError(e);return}$("saveEdit").onclick=async()=>{try{await api(`/api/orders/${id}/edit`,{method:"POST",body:{number:$("m-number").value,letter:$("m-letter").value,size:$("m-size").value,color:$("m-color").value,notes:$("m-notes").value}});closeModal();await load();toast("تم حفظ التعديل")}catch(e){showError(e)}}}
+async function viewOrder(id){try{const d=await api(`/api/order/${id}/details`);openModal(`تفاصيل الطلب #${id}`,`<div class="panel" style="box-shadow:none;margin:0"><div class="order-code">${ltr(code(d.order))}</div><div class="meta"><span class="chip">${esc(statusNames[d.order.status]||d.order.status)}</span><span class="chip">${esc(d.order.sender_name||"—")}</span></div><p>${esc(d.order.notes||"لا توجد ملاحظات")}</p><h4>الأحداث</h4>${(d.events||[]).map(e=>`<div style="padding:7px 0;border-bottom:1px solid var(--line)"><b>${esc(e.type)}</b> — ${esc(e.actor_name||"النظام")} <span class="muted ltr">${new Date(e.created_at).toLocaleString("en-GB")}</span></div>`).join("")||"لا توجد أحداث"}</div>`)}catch(e){showError(e)}}
 async function displayStatus(id,status){try{await api(`/api/displays/${id}/status`,{method:"POST",body:{status}});await load();toast("تم تحديث اللوحة")}catch(e){showError(e)}}
-function newDisplay(){
- openModal("إضافة للوحة الأرقام",`<div class="form-grid"><div class="field"><label>الرقم</label><input id="d-number" class="ltr"></div><div class="field"><label>الحرف</label><input id="d-letter" class="ltr"></div><div class="field"><label>المقاس</label><input id="d-size" class="ltr"></div><div class="field"><label>اللون</label><input id="d-color" class="ltr"></div></div><div class="form-actions"><button class="btn primary" id="saveDisplay">إضافة</button></div>`);
- $("saveDisplay").onclick=async()=>{try{await api("/api/displays",{method:"POST",body:{number:$("d-number").value,letter:$("d-letter").value,size:$("d-size").value,color:$("d-color").value}});closeModal();await load();toast("أضيفت للوحة")}catch(e){showError(e)}}
-}
-async function addListItem(key){
- if(me.role!=="supervisor")return toast("إدارة القوائم للمشرف فقط",true);
- const input=$(`new-${key}`),v=input.value.trim();if(!v)return;
- const arr=[...(state.settings[key]||[])];if(arr.some(x=>String(x).toUpperCase()===v.toUpperCase()))return toast("العنصر موجود بالفعل",true);
- arr.push(v);
- try{await api("/api/settings",{method:"POST",body:{[key]:arr}});input.value="";await load();toast("تمت الإضافة")}catch(e){showError(e)}
-}
-async function removeListItem(key,index){
- if(!confirm("حذف هذا الخيار من القائمة؟"))return;
- const arr=[...(state.settings[key]||[])];arr.splice(index,1);
- try{await api("/api/settings",{method:"POST",body:{[key]:arr}});await load();toast("تم الحذف")}catch(e){showError(e)}
-}
-async function saveSettings(){
- try{await api("/api/settings",{method:"POST",body:{prep_limit:+$("set-prep").value,unconfirmed_seconds:+$("set-unconfirmed").value,audio_retention_days:+$("set-audio").value,display_alert_seconds:+$("set-display").value}});await load();toast("تم حفظ الإعدادات")}catch(e){showError(e)}
-}
-async function savePassword(){try{await api("/api/password",{method:"POST",body:{password:$("newPassword").value}});$("newPassword").value="";toast("تم تغيير كلمة المرور")}catch(e){showError(e)}}
+function newDisplay(){openModal("إضافة للوحة الأرقام",`<div class="form-grid"><div class="field"><label>الرقم</label><input id="d-number" class="ltr"></div><div class="field"><label>الحرف</label><input id="d-letter" class="ltr"></div><div class="field"><label>المقاس</label><input id="d-size" class="ltr"></div><div class="field"><label>اللون</label><input id="d-color" class="ltr"></div></div><div class="form-actions"><button class="btn primary" id="saveDisplay">إضافة</button></div>`);$("saveDisplay").onclick=async()=>{try{await api("/api/displays",{method:"POST",body:{number:$("d-number").value,letter:$("d-letter").value,size:$("d-size").value,color:$("d-color").value}});closeModal();await load();toast("أضيفت للوحة")}catch(e){showError(e)}}}
+async function addListItem(key){if(me.role!=="supervisor")return toast("إدارة القوائم للمشرف فقط",true);const input=$(`new-${key}`),v=input.value.trim();if(!v)return;const arr=[...(state.settings[key]||[])];if(arr.some(x=>String(x).toUpperCase()===v.toUpperCase()))return toast("العنصر موجود بالفعل",true);arr.push(v);try{await api("/api/settings",{method:"POST",body:{[key]:arr}});input.value="";await load();toast("تمت الإضافة") }catch(e){showError(e)}}
+async function removeListItem(key,index){if(me.role!=="supervisor")return;if(!confirm("حذف هذا الخيار من القائمة؟"))return;const arr=[...(state.settings[key]||[])];arr.splice(index,1);try{await api("/api/settings",{method:"POST",body:{[key]:arr}});await load();toast("تم الحذف")}catch(e){showError(e)}}
+async function saveSettings(){try{await api("/api/settings",{method:"POST",body:{prep_limit:+$("set-prep").value,unconfirmed_seconds:+$("set-unconfirmed").value,audio_retention_days:+$("set-audio").value,display_alert_seconds:+$("set-display").value}});await load();toast("تم حفظ الإعدادات")}catch(e){showError(e)}}
+async function savePassword(){const p=$("newPassword").value.trim();if(!p)return toast("اكتب الرمز الجديد",true);try{await api("/api/password",{method:"POST",body:{password:p}});$("newPassword").value="";toast("تم تفعيل رمز المشرف")}catch(e){showError(e)}}
+async function disablePassword(){if(!confirm("تعطيل رمز المشرف؟ سيصبح الدخول بدون رمز."))return;try{await api("/api/password",{method:"POST",body:{password:""}});toast("تم تعطيل رمز المشرف")}catch(e){showError(e)}}
 async function cleanup(){try{const d=await api("/api/cleanup",{method:"POST",body:{}});toast(`تم تنظيف ${d.removed} تسجيل`)}catch(e){showError(e)}}
-async function searchHistory(){
- try{const q=$("historySearch").value;const d=await api("/api/history?q="+encodeURIComponent(q));renderHistory(d.orders)}catch(e){showError(e)}
-}
+async function searchHistory(){try{const d=await api("/api/history?q="+encodeURIComponent($("historySearch").value));renderHistory(d.orders)}catch(e){showError(e)}}
 async function clearHistory(){if(!confirm("حذف جميع الطلبات المغلقة من السجل؟"))return;try{await api("/api/history",{method:"DELETE"});await load();toast("تم حذف السجل المغلق")}catch(e){showError(e)}}
-function newUser(){
- openModal("إضافة موظف",`<div class="form-grid"><div class="field"><label>الاسم</label><input id="u-name"></div><div class="field"><label>الدور</label><select id="u-role"><option value="downstairs">صالة</option><option value="upstairs">مستودع</option><option value="supervisor">مشرف</option></select></div></div><div class="form-actions"><button class="btn primary" id="saveUser">إضافة</button></div>`);
- $("saveUser").onclick=async()=>{try{await api("/api/users",{method:"POST",body:{name:$("u-name").value,role:$("u-role").value}});closeModal();await load();toast("تمت إضافة الموظف")}catch(e){showError(e)}}
-}
-function editUser(id){
- const u=state.users.find(x=>x.id===id);if(!u)return;
- openModal("تعديل الصلاحيات",`<div class="notice">${esc(u.name)} — ${roleNames[u.role]||u.role}</div>
- <label style="display:block;margin:8px 0"><input id="ucustom" type="checkbox" ${u.can_customize?"checked":""}> السماح بتخصيص الواجهة</label>
- <label style="display:block;margin:8px 0"><input id="usend" type="checkbox" ${u.can_send?"checked":""}> إرسال</label>
- <label style="display:block;margin:8px 0"><input id="ureceive" type="checkbox" ${u.can_receive?"checked":""}> استقبال</label>
- <div class="form-actions"><button class="btn primary" id="saveUserPerm">حفظ</button></div>`);
- $("saveUserPerm").onclick=async()=>{try{await api(`/api/users/${id}/permissions`,{method:"POST",body:{canCustomize:$("ucustom").checked,canSend:$("usend").checked,canReceive:$("ureceive").checked,permissions:{}}});closeModal();await load();toast("تم حفظ الصلاحيات")}catch(e){showError(e)}}
-}
-function connect(){
- try{ws=new WebSocket((location.protocol==="https:"?"wss":"ws")+"//"+location.host+"/ws?token="+encodeURIComponent(token));
- ws.onmessage=()=>load();ws.onclose=()=>{if(token)setTimeout(connect,2500)}
- }catch{}
-}
-$("loginRole").addEventListener("change",()=>$("loginPassWrap").classList.toggle("hidden",$("loginRole").value!=="supervisor"));
-$("loginBtn").onclick=login;$("loginPass").addEventListener("keydown",e=>{if(e.key==="Enter")login()});
-$("logoutBtn").onclick=logout;$("refreshBtn").onclick=()=>load().then(()=>toast("تم التحديث"));
-$("sendOrder").onclick=createOrder;$("clearOrder").onclick=clearOrder;$("newDisplayBtn").onclick=newDisplay;$("newUserBtn").onclick=newUser;
-$("saveSettings").onclick=saveSettings;$("savePassword").onclick=savePassword;$("cleanupAudio").onclick=cleanup;$("historyBtn").onclick=searchHistory;$("clearHistoryBtn").onclick=clearHistory;
-$("orderSearch").oninput=renderOrders;$("orderStatus").onchange=renderOrders;
-$("modalClose").onclick=closeModal;$("modal").addEventListener("click",e=>{if(e.target===$("modal"))closeModal()});
-document.querySelectorAll("#nav button[data-page]").forEach(b=>b.onclick=()=>go(b.dataset.page));
-document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));
-$("loginRole").dispatchEvent(new Event("change"));
+function newUser(){openModal("إضافة موظف",`<div class="form-grid"><div class="field"><label>الاسم</label><input id="u-name"></div><div class="field"><label>الدور</label><select id="u-role"><option value="downstairs">صالة</option><option value="upstairs">مستودع</option><option value="supervisor">مشرف</option></select></div></div><div class="form-actions"><button class="btn primary" id="saveUser">إضافة</button></div>`);$("saveUser").onclick=async()=>{try{await api("/api/users",{method:"POST",body:{name:$("u-name").value,role:$("u-role").value}});closeModal();await load();toast("تمت إضافة الموظف")}catch(e){showError(e)}}}
+function editUser(id){const u=state.users.find(x=>x.id===id);if(!u)return;openModal("صلاحيات الموظف",`<div class="notice">${esc(u.name)} — ${roleNames[u.role]||u.role}</div><label style="display:block;margin:9px 0"><input id="ucustom" type="checkbox" ${u.can_customize?"checked":""}> السماح بتخصيص الواجهة</label><label style="display:block;margin:9px 0"><input id="usend" type="checkbox" ${u.can_send?"checked":""}> إرسال الطلبات</label><label style="display:block;margin:9px 0"><input id="ureceive" type="checkbox" ${u.can_receive?"checked":""}> استقبال الطلبات</label><div class="form-actions"><button class="btn primary" id="saveUserPerm">حفظ</button></div>`);$("saveUserPerm").onclick=async()=>{try{await api(`/api/users/${id}/permissions`,{method:"POST",body:{canCustomize:$("ucustom").checked,canSend:$("usend").checked,canReceive:$("ureceive").checked,permissions:{all:u.role==='supervisor'}}});closeModal();await load();toast("تم حفظ الصلاحيات")}catch(e){showError(e)}}}
+function connect(){try{ws=new WebSocket((location.protocol==="https:"?"wss":"ws")+"//"+location.host+"/ws?token="+encodeURIComponent(token));ws.onmessage=()=>load();ws.onclose=()=>{if(token)setTimeout(connect,2500)}}catch{}}
+$("loginRole").addEventListener("change",()=>$("loginPassWrap").classList.toggle("hidden",$("loginRole").value!=="supervisor"));$("loginBtn").onclick=login;$("loginPass").addEventListener("keydown",e=>{if(e.key==="Enter")login()});$("loginName").addEventListener("keydown",e=>{if(e.key==="Enter")login()});$("logoutBtn").onclick=logout;$("refreshBtn").onclick=()=>load().then(()=>toast("تم التحديث"));$("sendOrder").onclick=createOrder;$("clearOrder").onclick=clearOrder;$("quickClear").onclick=clearOrder;$("quickUndo").onclick=()=>quickKey("⌫");$("newDisplayBtn").onclick=newDisplay;$("newUserBtn").onclick=newUser;$("manageListsHome").onclick=()=>go("lists");$("saveSettings").onclick=saveSettings;$("savePassword").onclick=savePassword;$("disablePassword").onclick=disablePassword;$("cleanupAudio").onclick=cleanup;$("historyBtn").onclick=searchHistory;$("clearHistoryBtn").onclick=clearHistory;$("orderSearch").oninput=renderOrders;$("orderStatus").onchange=renderOrders;$("quickInput").addEventListener("input",()=>{quick.number=$("quickInput").value;quick.letter=quick.size=quick.color=""});$("modalClose").onclick=closeModal;$("modal").addEventListener("click",e=>{if(e.target===$("modal"))closeModal()});document.querySelectorAll("#nav button[data-page]").forEach(b=>b.onclick=()=>go(b.dataset.page));document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go(b.dataset.go));$("loginRole").dispatchEvent(new Event("change"));
 </script>
 </body>
 </html>
