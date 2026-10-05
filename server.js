@@ -228,6 +228,7 @@ const defaultSettings = {
   display_alert_seconds: "30",
   display_alert_enabled: "1",
   summon_locations: JSON.stringify(["كاشير", "بلاستيكات", "المكتب", "الجسر", "ورا اللوحة"]),
+  numbers: JSON.stringify([]),
   colors: JSON.stringify(["BLK", "BRN", "COF", "GRY", "KHA", "NVY", "CML", "TAN", "CRM", "WHT", "BLU", "DGRY", "LGRY", "GRN", "OLV"]),
   letters: JSON.stringify(["R", "S", "B", "Z"]),
   sizes: JSON.stringify(["39", "40", "41", "42", "42.5", "43", "44", "45", "46", "47", "48", "49", "50"])
@@ -419,6 +420,7 @@ app.get("/api/bootstrap", auth, (req, res) => {
       displayAlertSeconds: int(getSetting("display_alert_seconds"), 30),
       displayAlertEnabled: getSetting("display_alert_enabled") === "1",
       locations: json(getSetting("summon_locations"), []),
+      numbers: json(getSetting("numbers"), []),
       colors: json(getSetting("colors"), []),
       letters: json(getSetting("letters"), []),
       sizes: json(getSetting("sizes"), [])
@@ -484,6 +486,24 @@ app.post("/api/orders/:id/status", auth, (req, res) => {
   db.prepare(`UPDATE orders SET ${fields.join(", ")} WHERE id = ?`).run(...values);
   event(order.id, status, req.user, str(req.body.details || req.body.reason));
   broadcast("orders_changed", { orderId: order.id });
+  res.json({ ok: true });
+});
+
+app.delete("/api/orders/:id", auth, supervisorOnly, (req, res) => {
+  const order = requireOrder(req, res); if (!order) return;
+  const transaction = db.transaction(() => {
+    db.prepare("DELETE FROM order_events WHERE order_id=?").run(order.id);
+    db.prepare("DELETE FROM replies WHERE order_id=?").run(order.id);
+    const audio = db.prepare("SELECT file_name FROM order_audio WHERE order_id=?").all(order.id);
+    for (const a of audio) { try { fs.unlinkSync(path.join(AUDIO_DIR, a.file_name)); } catch {} }
+    db.prepare("DELETE FROM order_audio WHERE order_id=?").run(order.id);
+    db.prepare("DELETE FROM displays WHERE order_id=?").run(order.id);
+    db.prepare("DELETE FROM orders WHERE id=?").run(order.id);
+  });
+  transaction();
+  audit(req.user, "order_deleted", "order", order.id, order.code || "");
+  broadcast("orders_changed", { orderId: order.id });
+  broadcast("history_changed");
   res.json({ ok: true });
 });
 
@@ -662,7 +682,7 @@ app.post("/api/users/:id/status", auth, (req, res) => {
 });
 
 app.post("/api/settings", auth, supervisorOnly, (req, res) => {
-  const allowed = ["prep_limit","unconfirmed_seconds","audio_retention_days","history_limit","display_alert_seconds","display_alert_enabled","summon_locations","colors","letters","sizes"];
+  const allowed = ["prep_limit","unconfirmed_seconds","audio_retention_days","history_limit","display_alert_seconds","display_alert_enabled","summon_locations","numbers","colors","letters","sizes"];
   for (const key of allowed) if (req.body[key] !== undefined) setSetting(key, typeof req.body[key] === "object" ? JSON.stringify(req.body[key]) : req.body[key]);
   audit(req.user, "settings_changed", "settings", null, JSON.stringify(req.body));
   broadcast("settings_changed");
