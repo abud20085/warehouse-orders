@@ -220,7 +220,8 @@ addColumn("orders", "edit_started_at", "TEXT");
 addColumn("orders", "check_result", "TEXT");
 
 const defaultSettings = {
-  supervisor_password: bcrypt.hashSync(process.env.SUPERVISOR_PASSWORD || "123456", 10),
+  supervisor_password: "",
+  supervisor_password_enabled: "0",
   prep_limit: "10",
   unconfirmed_seconds: "30",
   audio_retention_days: "30",
@@ -258,7 +259,7 @@ function seedUsers() {
   `);
   const created = now();
 
-  insert.run("المشرف", "supervisor", getSetting("supervisor_password"), 1, JSON.stringify({ all: true }), created);
+  insert.run("المشرف", "supervisor", getSetting("supervisor_password") || null, 1, JSON.stringify({ all: true }), created);
   insert.run("موظف الصالة", "downstairs", null, 0, "{}", created);
   insert.run("حافظ", "upstairs", null, 0, "{}", created);
   insert.run("موظف مستودع 2", "upstairs", null, 0, "{}", created);
@@ -362,7 +363,10 @@ app.post("/api/login", (req, res) => {
 
   if (role === "supervisor") {
     const user = db.prepare("SELECT * FROM users WHERE name = ? AND role = 'supervisor' AND active = 1").get(name || "المشرف");
-    if (!user || !bcrypt.compareSync(str(req.body.password), user.password_hash || "")) {
+    const passwordEnabled = getSetting("supervisor_password_enabled") === "1";
+    const suppliedPassword = str(req.body.password);
+    const passwordOk = !passwordEnabled || !!(user?.password_hash && bcrypt.compareSync(suppliedPassword, user.password_hash));
+    if (!user || !passwordOk) {
       return res.status(401).json({ error: "بيانات المشرف غير صحيحة" });
     }
     const sessionToken = makeToken();
@@ -419,6 +423,7 @@ app.get("/api/bootstrap", auth, (req, res) => {
       historyLimit,
       displayAlertSeconds: int(getSetting("display_alert_seconds"), 30),
       displayAlertEnabled: getSetting("display_alert_enabled") === "1",
+      supervisorPasswordEnabled: getSetting("supervisor_password_enabled") === "1",
       locations: json(getSetting("summon_locations"), []),
       numbers: json(getSetting("numbers"), []),
       colors: json(getSetting("colors"), []),
@@ -689,14 +694,23 @@ app.post("/api/settings", auth, supervisorOnly, (req, res) => {
   res.json({ ok: true });
 });
 app.post("/api/password", auth, supervisorOnly, (req, res) => {
-  const password = String(req.body.password || "");
-  if (password.length < 6) return res.status(400).json({ error: "كلمة المرور 6 أحرف على الأقل" });
+  const password = str(req.body.password);
+  if (!password) {
+    setSetting("supervisor_password", "");
+    setSetting("supervisor_password_enabled", "0");
+    db.prepare("UPDATE users SET password_hash=NULL WHERE role='supervisor'").run();
+    audit(req.user, "password_disabled", "user");
+    broadcast("password_changed");
+    return res.json({ ok: true, enabled: false });
+  }
+  if (password.length < 4) return res.status(400).json({ error: "الرمز 4 أحرف/أرقام على الأقل" });
   const hash = bcrypt.hashSync(password, 10);
   setSetting("supervisor_password", hash);
+  setSetting("supervisor_password_enabled", "1");
   db.prepare("UPDATE users SET password_hash=? WHERE role='supervisor'").run(hash);
   audit(req.user, "password_changed", "user");
   broadcast("password_changed");
-  res.json({ ok: true });
+  res.json({ ok: true, enabled: true });
 });
 
 /* History / search */
