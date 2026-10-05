@@ -433,13 +433,14 @@ app.get("/api/bootstrap", auth, (req, res) => {
     WHERE status NOT IN ('closed','cancelled','unconfirmed') OR edit_lock = 1
     ORDER BY datetime(created_at) ASC
   `).all();
+  const checks = db.prepare(`SELECT * FROM orders WHERE kind = 'check' AND status NOT IN ('closed','cancelled') ORDER BY datetime(created_at) ASC`).all();
   const history = db.prepare("SELECT * FROM orders ORDER BY datetime(created_at) DESC LIMIT ?").all(historyLimit);
   const users = db.prepare(`SELECT id,name,role,status,can_send,can_receive,can_customize,permissions,active,default_page FROM users ORDER BY role,name`).all();
   const displays = db.prepare(`SELECT * FROM displays WHERE status IN ('requested','waiting','displayed') ORDER BY datetime(created_at) ASC`).all();
   const allDisplays = db.prepare("SELECT * FROM displays ORDER BY datetime(created_at) DESC LIMIT 300").all();
   const specials = db.prepare("SELECT * FROM special_requests ORDER BY datetime(created_at) DESC LIMIT 100").all();
   const summons = db.prepare("SELECT * FROM summons ORDER BY datetime(created_at) DESC LIMIT 100").all();
-  const offers = db.prepare(`SELECT o.*, x.number, x.letter, x.size, x.color, x.code, x.sender_name FROM offers o LEFT JOIN orders x ON x.id=o.order_id WHERE o.status IN ('requested','waiting','done') ORDER BY datetime(o.created_at) ASC LIMIT 200`).all();
+  const offers = db.prepare(`SELECT o.*, x.number, x.letter, x.size, x.color, x.code, x.sender_name FROM offers o LEFT JOIN orders x ON x.id=o.order_id WHERE o.status IN ('requested','waiting','done','returned') ORDER BY datetime(o.created_at) ASC LIMIT 200`).all();
   const returns = db.prepare(`SELECT r.*, x.number, x.letter, x.size, x.color, x.code FROM returns r LEFT JOIN orders x ON x.id=r.order_id WHERE r.status IN ('new','replied') ORDER BY datetime(r.created_at) ASC LIMIT 200`).all();
   const notifications = db.prepare(`SELECT * FROM notifications WHERE target_id IS NULL OR target_id = ? ORDER BY datetime(created_at) DESC LIMIT 100`).all(req.user.id);
   const auditRows = db.prepare("SELECT * FROM audit ORDER BY datetime(created_at) DESC LIMIT 300").all();
@@ -447,7 +448,7 @@ app.get("/api/bootstrap", auth, (req, res) => {
   const uiPersonal = db.prepare("SELECT value FROM ui_config WHERE key = ?").get(`ui:user:${req.user.id}`)?.value;
 
   res.json({
-    me: req.user, orders, history, users, displays, allDisplays, specials, summons, offers, returns, notifications, audit: auditRows,
+    me: req.user, orders, checks, history, users, displays, allDisplays, specials, summons, offers, returns, notifications, audit: auditRows,
     settings: {
       prepLimit: int(getSetting("prep_limit"), 10),
       unconfirmedSeconds: int(getSetting("unconfirmed_seconds"), 30),
@@ -475,6 +476,18 @@ app.get("/api/order/:id/details", auth, (req, res) => {
     replies: db.prepare("SELECT * FROM replies WHERE order_id = ? ORDER BY id ASC").all(order.id),
     audio: db.prepare("SELECT * FROM order_audio WHERE order_id = ? ORDER BY id ASC").all(order.id)
   });
+});
+
+app.post("/api/checks", auth, (req,res)=>{
+  if(req.user.role!=="downstairs") return res.status(403).json({error:"التشييك من واجهة الصالة فقط"});
+  const number=upper(req.body.number), letter=upper(req.body.letter), size=upper(req.body.size), color=upper(req.body.color), notes=str(req.body.notes);
+  if(![number,letter,size,color,notes].some(Boolean)) return res.status(400).json({error:"أدخل بيانات التشييك"});
+  const created=now(), code=codeOf({number,letter,size,color});
+  const result=db.prepare(`INSERT INTO orders(kind,number,letter,size,color,notes,code,status,priority,sender_id,sender_name,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+    .run("check",number,letter,size,color,notes,code,"waiting","normal",req.user.id,req.user.name,created,created);
+  event(Number(result.lastInsertRowid),"check_requested",req.user,code);
+  broadcast("orders_changed",{orderId:Number(result.lastInsertRowid)});
+  res.json({ok:true,id:Number(result.lastInsertRowid)});
 });
 
 app.post("/api/orders", auth, (req, res) => {
@@ -585,9 +598,32 @@ app.post("/api/orders/:id/check", auth, (req, res) => {
 app.post("/api/orders/:id/check-result", auth, (req, res) => {
   const order = requireOrder(req, res); if (!order) return;
   const result = str(req.body.result);
-  if (!["موجود","غير موجود","يوجد بديل"].includes(result)) return res.status(400).json({ error: "نتيجة غير صحيحة" });
-  db.prepare("UPDATE orders SET check_result=?,status='waiting',updated_at=? WHERE id=?").run(result, now(), order.id);
-  event(order.id, "check_result", req.user, result);
+  if (!["موجود","غير موجود","يوجد بديل","جيب","خلاص"].includes(result)) {
+    return res.status(400).json({ error: "نتيجة غير صحيحة" });
+  }
+
+  const t = now();
+  if (result === "جيب") {
+    if (req.user.role !== "downstairs") return res.status(403).json({error:"هذا الإجراء لموظف الصالة"});
+    db.prepare("UPDATE orders SET kind='normal',size=NULL,color=NULL,check_result='جيب',status='new',claimant_id=NULL,claimant_name=NULL,updated_at=? WHERE id=?")
+      .run(t, order.id);
+    event(order.id, "check_get", req, "جيب — الرقم والحرف مثبتان");
+    broadcast("orders_changed", { orderId: order.id });
+    return res.json({ ok: true });
+  }
+
+  if (result === "خلاص") {
+    if (req.user.role !== "downstairs") return res.status(403).json({error:"هذا الإجراء لموظف الصالة"});
+    db.prepare("UPDATE orders SET status='closed',closed_reason='إغلاق بعد التشييك',check_result='خلاص',updated_at=? WHERE id=?")
+      .run(t, order.id);
+    event(order.id, "check_closed", req, "خلاص");
+    broadcast("orders_changed", { orderId: order.id });
+    return res.json({ ok: true });
+  }
+
+  if (req.user.role !== "upstairs") return res.status(403).json({error:"رد التشييك من المستودع فقط"});
+  db.prepare("UPDATE orders SET check_result=?,status='waiting',updated_at=? WHERE id=?").run(result, t, order.id);
+  event(order.id, "check_result", req, result);
   broadcast("check_result", { orderId: order.id, result });
   broadcast("orders_changed", { orderId: order.id });
   res.json({ ok: true });
@@ -798,9 +834,24 @@ app.post("/api/offers/:id/status", auth, (req,res)=>{
   const offer=db.prepare("SELECT * FROM offers WHERE id=?").get(int(req.params.id));
   if(!offer) return res.status(404).json({error:"طلب العرض غير موجود"});
   const status=str(req.body.status);
-  if(!['requested','waiting','done','cancelled'].includes(status)) return res.status(400).json({error:"حالة العرض غير صحيحة"});
-  db.prepare("UPDATE offers SET status=?,handled_by=?,handled_by_name=?,response=?,updated_at=? WHERE id=?").run(status,req.user.id,req.user.name,str(req.body.response),now(),offer.id);
-  if(status==='done') event(offer.order_id,"display_completed",req);
+  if(!["requested","waiting","done","returned","cancelled"].includes(status)) return res.status(400).json({error:"حالة العرض غير صحيحة"});
+  const response=str(req.body.response);
+  const t=now();
+  db.prepare("UPDATE offers SET status=?,handled_by=?,handled_by_name=?,response=?,updated_at=? WHERE id=?")
+    .run(status,req.user.id,req.user.name,response,t,offer.id);
+
+  if(status==="done"){
+    db.prepare("UPDATE orders SET status='closed',closed_reason='تم العرض',updated_at=? WHERE id=? AND status NOT IN ('closed','cancelled')")
+      .run(t,offer.order_id);
+    event(offer.order_id,"display_completed",req,"تم العرض");
+    broadcast("orders_changed",{orderId:offer.order_id});
+  } else if(status==="returned"){
+    event(offer.order_id,"display_returned",req,"رجع");
+    broadcast("orders_changed",{orderId:offer.order_id});
+  } else if(status==="waiting"){
+    event(offer.order_id,"display_waiting",req,response||"دقيقة");
+  }
+
   broadcast("offers_changed",{offerId:offer.id,orderId:offer.order_id});
   res.json({ok:true});
 });
