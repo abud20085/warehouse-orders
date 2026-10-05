@@ -132,6 +132,36 @@ CREATE TABLE IF NOT EXISTS displays (
   updated_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS offers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  order_id INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'requested',
+  requested_by INTEGER,
+  requested_by_name TEXT,
+  handled_by INTEGER,
+  handled_by_name TEXT,
+  response TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS returns (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  order_id INTEGER,
+  kind TEXT NOT NULL,
+  sender_id INTEGER,
+  sender_name TEXT,
+  target_id INTEGER,
+  target_name TEXT,
+  response TEXT,
+  status TEXT NOT NULL DEFAULT 'new',
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_offers_status ON offers(status);
+CREATE INDEX IF NOT EXISTS idx_returns_status ON returns(status);
+
 CREATE TABLE IF NOT EXISTS special_requests (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   sender_id INTEGER,
@@ -409,13 +439,15 @@ app.get("/api/bootstrap", auth, (req, res) => {
   const allDisplays = db.prepare("SELECT * FROM displays ORDER BY datetime(created_at) DESC LIMIT 300").all();
   const specials = db.prepare("SELECT * FROM special_requests ORDER BY datetime(created_at) DESC LIMIT 100").all();
   const summons = db.prepare("SELECT * FROM summons ORDER BY datetime(created_at) DESC LIMIT 100").all();
+  const offers = db.prepare(`SELECT o.*, x.number, x.letter, x.size, x.color, x.code, x.sender_name FROM offers o LEFT JOIN orders x ON x.id=o.order_id WHERE o.status IN ('requested','waiting','done') ORDER BY datetime(o.created_at) ASC LIMIT 200`).all();
+  const returns = db.prepare(`SELECT r.*, x.number, x.letter, x.size, x.color, x.code FROM returns r LEFT JOIN orders x ON x.id=r.order_id WHERE r.status IN ('new','replied') ORDER BY datetime(r.created_at) ASC LIMIT 200`).all();
   const notifications = db.prepare(`SELECT * FROM notifications WHERE target_id IS NULL OR target_id = ? ORDER BY datetime(created_at) DESC LIMIT 100`).all(req.user.id);
   const auditRows = db.prepare("SELECT * FROM audit ORDER BY datetime(created_at) DESC LIMIT 300").all();
   const uiGlobal = db.prepare("SELECT value FROM ui_config WHERE key = 'ui:global'").get()?.value;
   const uiPersonal = db.prepare("SELECT value FROM ui_config WHERE key = ?").get(`ui:user:${req.user.id}`)?.value;
 
   res.json({
-    me: req.user, orders, history, users, displays, allDisplays, specials, summons, notifications, audit: auditRows,
+    me: req.user, orders, history, users, displays, allDisplays, specials, summons, offers, returns, notifications, audit: auditRows,
     settings: {
       prepLimit: int(getSetting("prep_limit"), 10),
       unconfirmedSeconds: int(getSetting("unconfirmed_seconds"), 30),
@@ -749,6 +781,54 @@ app.delete("/api/history", auth, supervisorOnly, (req, res) => {
   audit(req.user, "history_deleted", "history");
   broadcast("history_changed");
   res.json({ ok: true });
+});
+
+/* Offers / Returns */
+app.post("/api/orders/:id/offer", auth, (req, res) => {
+  const order = requireOrder(req, res); if (!order) return;
+  const active = db.prepare("SELECT id FROM offers WHERE order_id=? AND status IN ('requested','waiting','done') ORDER BY id DESC LIMIT 1").get(order.id);
+  if (active) return res.status(409).json({ error: "الطلب موجود بالفعل في قائمة العروض" });
+  const t=now();
+  const r=db.prepare("INSERT INTO offers(order_id,status,requested_by,requested_by_name,created_at,updated_at) VALUES(?,?,?,?,?,?)").run(order.id,'requested',req.user.id,req.user.name,t,t);
+  event(order.id,"offer_requested",req,codeOf(order));
+  broadcast("offers_changed",{offerId:Number(r.lastInsertRowid),orderId:order.id});
+  res.json({ok:true,id:Number(r.lastInsertRowid)});
+});
+app.post("/api/offers/:id/status", auth, (req,res)=>{
+  const offer=db.prepare("SELECT * FROM offers WHERE id=?").get(int(req.params.id));
+  if(!offer) return res.status(404).json({error:"طلب العرض غير موجود"});
+  const status=str(req.body.status);
+  if(!['requested','waiting','done','cancelled'].includes(status)) return res.status(400).json({error:"حالة العرض غير صحيحة"});
+  db.prepare("UPDATE offers SET status=?,handled_by=?,handled_by_name=?,response=?,updated_at=? WHERE id=?").run(status,req.user.id,req.user.name,str(req.body.response),now(),offer.id);
+  if(status==='done') event(offer.order_id,"display_completed",req);
+  broadcast("offers_changed",{offerId:offer.id,orderId:offer.order_id});
+  res.json({ok:true});
+});
+app.post("/api/returns", auth, (req,res)=>{
+  const kind=str(req.body.kind);
+  if(!['طلب','سحب'].includes(kind)) return res.status(400).json({error:"نوع الرجيع غير صحيح"});
+  const orderId=int(req.body.orderId)||null;
+  const t=now();
+  const r=db.prepare("INSERT INTO returns(order_id,kind,sender_id,sender_name,status,created_at,updated_at) VALUES(?,?,?,?,?,?,?)").run(orderId,kind,req.user.id,req.user.name,'new',t,t);
+  broadcast("returns_changed",{returnId:Number(r.lastInsertRowid)});
+  res.json({ok:true,id:Number(r.lastInsertRowid)});
+});
+app.post("/api/returns/:id/respond", auth, (req,res)=>{
+  const row=db.prepare("SELECT * FROM returns WHERE id=?").get(int(req.params.id));
+  if(!row) return res.status(404).json({error:"طلب الرجيع غير موجود"});
+  const response=str(req.body.response);
+  if(!['حاضر','دقيقة','تم'].includes(response)) return res.status(400).json({error:"الرد غير صحيح"});
+  db.prepare("UPDATE returns SET status='replied',response=?,target_id=?,target_name=?,updated_at=? WHERE id=?").run(response,req.user.id,req.user.name,now(),row.id);
+  broadcast("returns_changed",{returnId:row.id});
+  res.json({ok:true});
+});
+app.post("/api/orders/:id/alter", auth, (req,res)=>{
+  const order=requireOrder(req,res); if(!order) return;
+  const text=str(req.body.text); if(!text) return res.status(400).json({error:"اكتب البديل أو اختره"});
+  db.prepare("UPDATE orders SET notes=CASE WHEN COALESCE(notes,'')='' THEN ? ELSE notes || ' | بديل: ' || ? END, status='needs_reply', updated_at=? WHERE id=?").run('بديل: '+text,text,now(),order.id);
+  event(order.id,"alternative_requested",req,text);
+  broadcast("orders_changed",{orderId:order.id});
+  res.json({ok:true});
 });
 
 /* Displays */
