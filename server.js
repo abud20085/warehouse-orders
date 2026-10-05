@@ -430,67 +430,30 @@ app.get('/api/bootstrap',auth,(req,res)=>{
 });
 
 app.get('/api/orders',auth,(req,res)=>{
-  const search=clean(req.query.search);
-  const status=clean(req.query.status);
-  const priority=clean(req.query.priority);
-
-  let sql=`
-    SELECT
-      o.*,
-      u.name assigned_name,
-      c.name creator_name,
-      (
-        SELECT COUNT(*)
-        FROM replies r
-        WHERE r.order_id=o.id
-      ) replies_count
-    FROM orders o
-    LEFT JOIN users u ON u.id=o.assigned_to
-    LEFT JOIN users c ON c.id=o.created_by
-    WHERE 1=1
-  `;
-
-  const p={};
-
-  if(search){
-    sql+=`
-      AND (
-        o.order_no LIKE @s
-        OR o.customer LIKE @s
-        OR o.department LIKE @s
-        OR o.notes LIKE @s
-      )
-    `;
-    p.s='%'+search+'%';
+  try{
+    const search=clean(req.query.search);
+    const status=clean(req.query.status);
+    const priority=clean(req.query.priority);
+    let sql=`SELECT o.*,u.name AS assigned_name,c.name AS creator_name,
+      (SELECT COUNT(*) FROM replies r WHERE r.order_id=o.id) AS replies_count
+      FROM orders o
+      LEFT JOIN users u ON u.id=o.assigned_to
+      LEFT JOIN users c ON c.id=o.created_by
+      WHERE 1=1`;
+    const p={};
+    if(search){
+      sql+=` AND (o.order_no LIKE @s OR o.customer LIKE @s OR o.department LIKE @s OR o.notes LIKE @s)`;
+      p.s='%'+search+'%';
+    }
+    if(status){sql+=` AND o.status=@status`;p.status=status;}
+    if(priority){sql+=` AND o.priority=@priority`;p.priority=priority;}
+    sql+=` ORDER BY CASE o.priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 ELSE 2 END, o.created_at DESC LIMIT 500`;
+    const rows=all(sql,p).map(o=>({...o,items:json(o.items_json)||[]}));
+    res.json({orders:rows});
+  }catch(e){
+    console.error('Orders error:',e);
+    res.status(500).json({error:'تعذر تحميل الطلبات'});
   }
-
-  if(status){
-    sql+=' AND o.status=@status';
-    p.status=status;
-  }
-
-  if(priority){
-    sql+=' AND o.priority=@priority';
-    p.priority=priority;
-  }
-
-  sql+=`
-    ORDER BY
-      CASE o.priority
-        WHEN "urgent" THEN 0
-        WHEN "high" THEN 1
-        ELSE 2
-      END,
-      o.created_at DESC
-    LIMIT 500
-  `;
-
-  const rows=all(sql,p).map(o=>({
-    ...o,
-    items:json(o.items_json)||[]
-  }));
-
-  res.json({orders:rows});
 });
 
 app.get('/api/orders/:id',auth,(req,res)=>{
@@ -1010,12 +973,23 @@ app.post('/api/settings/password',auth,(req,res)=>{
 
 app.get('/api/analytics',auth,(req,res)=>{
   try{
-    const totals=q(`SELECT COUNT(*) AS total, COUNT(CASE WHEN status='completed' THEN 1 END) AS completed, COUNT(CASE WHEN status='new' THEN 1 END) AS new_count, COUNT(CASE WHEN status='processing' THEN 1 END) AS processing, COUNT(CASE WHEN priority='urgent' THEN 1 END) AS urgent FROM orders`)||{};
-    totals.new=totals.new_count||0; delete totals.new_count;
-    const byDay=all(`SELECT substr(created_at,1,10) day, COUNT(*) count FROM orders WHERE created_at>=datetime('now','-14 days') GROUP BY day ORDER BY day`);
-    const byUser=all(`SELECT COALESCE(u.name,'غير مسند') name, COUNT(*) count FROM orders o LEFT JOIN users u ON u.id=o.assigned_to GROUP BY o.assigned_to ORDER BY count DESC LIMIT 10`);
+    const rows=all(`SELECT status,COUNT(*) AS count FROM orders GROUP BY status`);
+    const totals={total:0,new:0,processing:0,completed:0,urgent:0};
+    for(const r of rows){
+      const n=Number(r.count)||0;
+      totals.total+=n;
+      if(r.status==='new') totals.new=n;
+      if(r.status==='processing') totals.processing=n;
+      if(r.status==='completed') totals.completed=n;
+    }
+    totals.urgent=Number(q(`SELECT COUNT(*) AS c FROM orders WHERE priority='urgent'`)?.c)||0;
+    const byDay=all(`SELECT substr(created_at,1,10) AS day,COUNT(*) AS count FROM orders WHERE created_at>=datetime('now','-14 days') GROUP BY substr(created_at,1,10) ORDER BY day`);
+    const byUser=all(`SELECT COALESCE(u.name,'غير مسند') AS name,COUNT(*) AS count FROM orders o LEFT JOIN users u ON u.id=o.assigned_to GROUP BY o.assigned_to ORDER BY count DESC LIMIT 10`);
     res.json({totals,byDay,byUser});
-  }catch(e){console.error('Analytics error:',e);res.status(500).json({error:'تعذر تحميل التحليلات'});}
+  }catch(e){
+    console.error('Analytics error:',e);
+    res.json({totals:{total:0,new:0,processing:0,completed:0,urgent:0},byDay:[],byUser:[]});
+  }
 });
 
 app.get('/api/audit',auth,supervisor,(req,res)=>{
